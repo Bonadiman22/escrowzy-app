@@ -11,7 +11,7 @@ export const Navbar = () => {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
               <Trophy className="w-6 h-6 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold">EscrowBet</span>
+            <span className="text-xl font-bold">Escrowzy</span>
           </Link>
 
           <div className="flex items-center gap-4">

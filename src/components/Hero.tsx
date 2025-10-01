@@ -22,19 +22,20 @@ export const Hero = () => {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-fade-in">
-            Aposte com Segurança
+            Venceu? Recebeu. Simples assim.
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto">
-            Plataforma de garantia para apostas entre amigos. Depositamos, garantimos e liberamos automaticamente para o vencedor.
+            Guardamos o prêmio até o campeão ser confirmado.
+            Organize campeonatos com confiança: a plataforma registra depósitos, aceita uploads de provas, aplica verificação por IA e realiza o pagamento ao vencedor.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button size="lg" className="text-lg px-8 gradient-primary" asChild>
-              <Link to="/dashboard">Criar Campeonato</Link>
+            <Button size="lg" className="text-lg px-8 gradient-primary transition-transform duration-200 hover:scale-105" asChild>
+              <Link to="/auth">Criar Campeonato</Link>
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8" asChild>
-              <Link to="/dashboard">Ver Campeonatos</Link>
+              <Link to="/auth">Ver Campeonatos</Link>
             </Button>
           </div>
 

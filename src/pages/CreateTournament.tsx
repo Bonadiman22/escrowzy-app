@@ -15,6 +15,7 @@ const CreateTournament = () => {
   const [formData, setFormData] = useState({
     name: "",
     game: "",
+    gameMode: "",
     maxPlayers: "4",
     entryFee: "",
     adjudicationMethod: "host",
@@ -75,14 +76,38 @@ const CreateTournament = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="game">Jogo</Label>
-                  <Input
-                    id="game"
-                    placeholder="Ex: EA FC 25, CS2, League of Legends"
+                  <Select
                     value={formData.game}
-                    onChange={(e) => setFormData({ ...formData, game: e.target.value })}
-                    required
-                  />
+                    onValueChange={(value) => setFormData({ ...formData, game: value, gameMode: "" })}
+                  >
+                    <SelectTrigger id="game">
+                      <SelectValue placeholder="Selecione o jogo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ea-fc">EA FC</SelectItem>
+                      <SelectItem value="outros">Outros</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                {formData.game === "ea-fc" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="gameMode">Modo</Label>
+                    <Select
+                      value={formData.gameMode}
+                      onValueChange={(value) => setFormData({ ...formData, gameMode: value })}
+                    >
+                      <SelectTrigger id="gameMode">
+                        <SelectValue placeholder="Selecione o modo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ultimate-team">Ultimate Team</SelectItem>
+                        <SelectItem value="pro-clubs">Pro Clubs</SelectItem>
+                        <SelectItem value="torneio-equipes">Torneio entre Equipes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">

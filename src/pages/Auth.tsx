@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,6 +13,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [pixKeyType, setPixKeyType] = useState<string>("email");
 
   const handleAuth = async (e: React.FormEvent, type: "login" | "signup") => {
     e.preventDefault();
@@ -80,12 +82,40 @@ const Auth = () => {
                       <Input id="signup-email" type="email" placeholder="seu@email.com" required />
                     </div>
                     <div className="space-y-2">
+                      <Label htmlFor="signup-phone">Celular</Label>
+                      <Input id="signup-phone" type="tel" placeholder="(11) 98765-4321" required />
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="signup-password">Senha</Label>
                       <Input id="signup-password" type="password" required />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-pix">Chave PIX (opcional)</Label>
-                      <Input id="signup-pix" type="text" placeholder="email@example.com" />
+                      <Label htmlFor="pix-type">Tipo de Chave PIX</Label>
+                      <Select value={pixKeyType} onValueChange={setPixKeyType} required>
+                        <SelectTrigger id="pix-type">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="email">E-mail</SelectItem>
+                          <SelectItem value="phone">Celular</SelectItem>
+                          <SelectItem value="cpf">CPF</SelectItem>
+                          <SelectItem value="cnpj">CNPJ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-pix">Chave PIX</Label>
+                      <Input 
+                        id="signup-pix" 
+                        type="text" 
+                        placeholder={
+                          pixKeyType === "email" ? "email@example.com" :
+                          pixKeyType === "phone" ? "(11) 98765-4321" :
+                          pixKeyType === "cpf" ? "000.000.000-00" :
+                          "00.000.000/0000-00"
+                        }
+                        required 
+                      />
                       <p className="text-xs text-muted-foreground">Para receber prêmios rapidamente</p>
                     </div>
                     <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>
