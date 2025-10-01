@@ -1,0 +1,166 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Navbar } from "@/components/Navbar";
+import { ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+const CreateTournament = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    name: "",
+    game: "",
+    maxPlayers: "4",
+    entryFee: "",
+    adjudicationMethod: "host",
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    toast({
+      title: "Campeonato criado!",
+      description: "Convite gerado. Compartilhe com os participantes.",
+    });
+    
+    setTimeout(() => {
+      navigate("/dashboard");
+    }, 1500);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      
+      <main className="container mx-auto px-4 pt-24 pb-12">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/dashboard")}
+          className="mb-6 animate-fade-in"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar
+        </Button>
+
+        <div className="max-w-2xl mx-auto animate-slide-up">
+          <h1 className="text-4xl font-bold mb-2">Criar Campeonato</h1>
+          <p className="text-muted-foreground mb-8">
+            Configure seu torneio e convide os participantes
+          </p>
+
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Informações do Campeonato</CardTitle>
+              <CardDescription>
+                Preencha os detalhes para criar seu torneio
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome do Campeonato</Label>
+                  <Input
+                    id="name"
+                    placeholder="Ex: Campeonato EA FC 25"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="game">Jogo</Label>
+                  <Input
+                    id="game"
+                    placeholder="Ex: EA FC 25, CS2, League of Legends"
+                    value={formData.game}
+                    onChange={(e) => setFormData({ ...formData, game: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="maxPlayers">Número de Jogadores</Label>
+                    <Select
+                      value={formData.maxPlayers}
+                      onValueChange={(value) => setFormData({ ...formData, maxPlayers: value })}
+                    >
+                      <SelectTrigger id="maxPlayers">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2">2 jogadores</SelectItem>
+                        <SelectItem value="4">4 jogadores</SelectItem>
+                        <SelectItem value="8">8 jogadores</SelectItem>
+                        <SelectItem value="16">16 jogadores</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="entryFee">Valor por Jogador (R$)</Label>
+                    <Input
+                      id="entryFee"
+                      type="number"
+                      placeholder="50.00"
+                      value={formData.entryFee}
+                      onChange={(e) => setFormData({ ...formData, entryFee: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="adjudicationMethod">Método de Decisão</Label>
+                  <Select
+                    value={formData.adjudicationMethod}
+                    onValueChange={(value) => setFormData({ ...formData, adjudicationMethod: value })}
+                  >
+                    <SelectTrigger id="adjudicationMethod">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="host">Host/Árbitro Manual</SelectItem>
+                      <SelectItem value="ai">Análise por IA (Beta)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">
+                    {formData.adjudicationMethod === "host"
+                      ? "Você decidirá o vencedor manualmente"
+                      : "IA analisará evidências automaticamente"}
+                  </p>
+                </div>
+
+                <div className="pt-4 space-y-4">
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-muted-foreground">Premiação Total</span>
+                      <span className="text-2xl font-bold text-primary">
+                        R$ {(Number(formData.entryFee) * Number(formData.maxPlayers) * 0.95).toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Taxa da plataforma: 5% (R$ {(Number(formData.entryFee) * Number(formData.maxPlayers) * 0.05).toFixed(2)})
+                    </p>
+                  </div>
+
+                  <Button type="submit" size="lg" className="w-full gradient-primary">
+                    Criar e Gerar Convite
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default CreateTournament;
