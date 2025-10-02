@@ -16,6 +16,10 @@ const CreateTournament = () => {
     name: "",
     game: "",
     gameMode: "",
+    platform: "",
+    tournamentType: "",
+    rounds: "1",
+    visibility: "private",
     maxPlayers: "4",
     entryFee: "",
     adjudicationMethod: "host",
@@ -109,6 +113,75 @@ const CreateTournament = () => {
                   </div>
                 )}
 
+                <div className="space-y-2">
+                  <Label htmlFor="platform">Plataforma</Label>
+                  <Select
+                    value={formData.platform}
+                    onValueChange={(value) => setFormData({ ...formData, platform: value })}
+                  >
+                    <SelectTrigger id="platform">
+                      <SelectValue placeholder="Selecione a plataforma" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ps">PlayStation</SelectItem>
+                      <SelectItem value="xbox">Xbox</SelectItem>
+                      <SelectItem value="pc">PC</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tournamentType">Tipo de Campeonato</Label>
+                  <Select
+                    value={formData.tournamentType}
+                    onValueChange={(value) => setFormData({ ...formData, tournamentType: value })}
+                  >
+                    <SelectTrigger id="tournamentType">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="knockout">Mata-mata</SelectItem>
+                      <SelectItem value="league">Pontos corridos</SelectItem>
+                      <SelectItem value="groups-knockout">Grupos + Mata-mata</SelectItem>
+                      <SelectItem value="round-robin">Round-robin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="rounds">Número de Voltas</Label>
+                    <Select
+                      value={formData.rounds}
+                      onValueChange={(value) => setFormData({ ...formData, rounds: value })}
+                    >
+                      <SelectTrigger id="rounds">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 volta</SelectItem>
+                        <SelectItem value="2">2 voltas (Ida e volta)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="visibility">Visibilidade</Label>
+                    <Select
+                      value={formData.visibility}
+                      onValueChange={(value) => setFormData({ ...formData, visibility: value })}
+                    >
+                      <SelectTrigger id="visibility">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="public">Público</SelectItem>
+                        <SelectItem value="private">Privado (link por convite)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="maxPlayers">Número de Jogadores</Label>
@@ -152,13 +225,16 @@ const CreateTournament = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="host">Host/Árbitro Manual</SelectItem>
-                      <SelectItem value="ai">Análise por IA (Beta)</SelectItem>
+                      <SelectItem value="ai">Análise por IA (automática)</SelectItem>
+                      <SelectItem value="hybrid">Híbrido (IA + confirmação do host)</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-sm text-muted-foreground">
                     {formData.adjudicationMethod === "host"
                       ? "Você decidirá o vencedor manualmente"
-                      : "IA analisará evidências automaticamente"}
+                      : formData.adjudicationMethod === "ai"
+                      ? "IA analisará evidências automaticamente"
+                      : "IA sugere o vencedor e você confirma"}
                   </p>
                 </div>
 
