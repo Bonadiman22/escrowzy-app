@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Navbar } from "@/components/Navbar";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -16,10 +17,10 @@ const CreateTournament = () => {
     name: "",
     game: "",
     gameMode: "",
-    platform: "",
     tournamentType: "",
     rounds: "1",
     visibility: "private",
+    crossPlay: false,
     maxPlayers: "4",
     entryFee: "",
     adjudicationMethod: "host",
@@ -114,23 +115,6 @@ const CreateTournament = () => {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="platform">Plataforma</Label>
-                  <Select
-                    value={formData.platform}
-                    onValueChange={(value) => setFormData({ ...formData, platform: value })}
-                  >
-                    <SelectTrigger id="platform">
-                      <SelectValue placeholder="Selecione a plataforma" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ps">PlayStation</SelectItem>
-                      <SelectItem value="xbox">Xbox</SelectItem>
-                      <SelectItem value="pc">PC</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="tournamentType">Tipo de Campeonato</Label>
                   <Select
                     value={formData.tournamentType}
@@ -143,7 +127,6 @@ const CreateTournament = () => {
                       <SelectItem value="knockout">Mata-mata</SelectItem>
                       <SelectItem value="league">Pontos corridos</SelectItem>
                       <SelectItem value="groups-knockout">Grupos + Mata-mata</SelectItem>
-                      <SelectItem value="round-robin">Round-robin</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -180,6 +163,17 @@ const CreateTournament = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="crossPlay"
+                    checked={formData.crossPlay}
+                    onCheckedChange={(checked) => setFormData({ ...formData, crossPlay: checked })}
+                  />
+                  <Label htmlFor="crossPlay" className="cursor-pointer">
+                    Cross-play habilitado
+                  </Label>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
