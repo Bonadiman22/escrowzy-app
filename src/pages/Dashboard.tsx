@@ -133,40 +133,37 @@ const Dashboard = () => {
         {/* Tournaments List */}
         <div className="grid gap-4 animate-slide-up">
           {tournaments.map((tournament) => (
-            <Card key={tournament.id} className="glass-card hover:shadow-lg transition-all cursor-pointer">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-xl mb-1">{tournament.name}</CardTitle>
-                    <CardDescription>{tournament.game}</CardDescription>
+            <Link key={tournament.id} to={`/tournament/${tournament.id}`}>
+              <Card className="glass-card hover:shadow-lg transition-all cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-xl mb-1">{tournament.name}</CardTitle>
+                      <CardDescription>{tournament.game}</CardDescription>
+                    </div>
+                    {getStatusBadge(tournament.status)}
                   </div>
-                  {getStatusBadge(tournament.status)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Participantes</p>
-                    <p className="font-semibold">
-                      {tournament.players}/{tournament.maxPlayers}
-                    </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Participantes</p>
+                      <p className="font-semibold">
+                        {tournament.players}/{tournament.maxPlayers}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Premiação</p>
+                      <p className="font-semibold text-primary">R$ {tournament.prizePool}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Criado em</p>
+                      <p className="font-semibold">{new Date(tournament.createdAt).toLocaleDateString()}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Premiação</p>
-                    <p className="font-semibold text-primary">R$ {tournament.prizePool}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Criado em</p>
-                    <p className="font-semibold">{new Date(tournament.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <div className="flex items-end justify-end md:justify-start">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/tournament/${tournament.id}`}>Ver Detalhes</Link>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </main>

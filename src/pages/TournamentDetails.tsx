@@ -4,6 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   Copy, 
   Share2, 
@@ -13,10 +20,15 @@ import {
   Clock,
   ArrowLeft,
   UserPlus,
-  Mail
+  Mail,
+  MoreVertical,
+  UserMinus
 } from "lucide-react";
 import { TournamentBracket } from "@/components/TournamentBracket";
 import { TournamentTable } from "@/components/TournamentTable";
+import { EditTournamentDialog } from "@/components/EditTournamentDialog";
+import { CancelTournamentDialog } from "@/components/CancelTournamentDialog";
+import { ParticipantStatsTab } from "@/components/ParticipantStatsTab";
 import { useToast } from "@/hooks/use-toast";
 
 interface Participant {
@@ -72,8 +84,10 @@ const mockTournament = {
 const TournamentDetails = () => {
   const { id } = useParams();
   const { toast } = useToast();
-  const [tournament] = useState(mockTournament);
-  const [participants] = useState<Participant[]>(mockParticipants);
+  const [tournament, setTournament] = useState(mockTournament);
+  const [participants, setParticipants] = useState<Participant[]>(mockParticipants);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const paidCount = participants.filter(p => p.paymentStatus === "paid").length;
   const pendingCount = participants.filter(p => p.paymentStatus === "pending").length;
@@ -90,6 +104,27 @@ const TournamentDetails = () => {
   const shareWhatsApp = () => {
     const message = `Participe do ${tournament.name}! Acesse: ${tournament.inviteLink}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+  };
+
+  const removeParticipant = (participantId: string) => {
+    setParticipants(participants.filter(p => p.id !== participantId));
+    toast({
+      title: "Participante removido",
+      description: "O jogador foi removido do campeonato.",
+    });
+  };
+
+  const handleEditSave = (data: { name: string; visibility: string }) => {
+    setTournament({ ...tournament, name: data.name, visibility: data.visibility });
+  };
+
+  const handleCancelTournament = () => {
+    // Lógica de cancelamento
+    toast({
+      title: "Campeonato cancelado",
+      description: "Todos os participantes serão reembolsados.",
+      variant: "destructive",
+    });
   };
 
   const getPaymentStatusBadge = (status: Participant["paymentStatus"]) => {
@@ -124,10 +159,14 @@ const TournamentDetails = () => {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
                 Editar
               </Button>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={() => setCancelDialogOpen(true)}
+              >
                 Cancelar
               </Button>
             </div>
@@ -238,69 +277,91 @@ const TournamentDetails = () => {
           </Card>
         </div>
 
-        {/* Participants List */}
+        {/* Tabs: Participants and Stats */}
         <Card className="glass-card mb-8 animate-slide-up">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle>Lista de Participantes</CardTitle>
-                <CardDescription>Gerencie os jogadores inscritos no campeonato</CardDescription>
+          <Tabs defaultValue="participants" className="w-full">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Gerenciar Campeonato</CardTitle>
+                  <CardDescription>Participantes, estatísticas e controle</CardDescription>
+                </div>
+                {tournament.visibility === "Privado" && (
+                  <Button size="sm">
+                    <Mail className="w-4 h-4 mr-2" />
+                    Enviar Convites
+                  </Button>
+                )}
               </div>
-              {tournament.visibility === "Privado" && (
-                <Button size="sm">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Enviar Convites
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {participants.map((participant) => (
-                <div 
-                  key={participant.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <img 
-                      src={participant.avatar} 
-                      alt={participant.name}
-                      className="w-12 h-12 rounded-full"
-                    />
-                    <div>
-                      <p className="font-semibold">{participant.name}</p>
-                      <p className="text-sm text-muted-foreground">@{participant.gamertag}</p>
+              <TabsList className="grid w-full max-w-md grid-cols-2 mt-4">
+                <TabsTrigger value="participants">Participantes</TabsTrigger>
+                <TabsTrigger value="stats">Estatísticas</TabsTrigger>
+              </TabsList>
+            </CardHeader>
+            <CardContent>
+              <TabsContent value="participants" className="space-y-3 mt-0">
+                {participants.map((participant) => (
+                  <div 
+                    key={participant.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <img 
+                        src={participant.avatar} 
+                        alt={participant.name}
+                        className="w-12 h-12 rounded-full"
+                      />
+                      <div>
+                        <p className="font-semibold">{participant.name}</p>
+                        <p className="text-sm text-muted-foreground">@{participant.gamertag}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right hidden md:block">
+                        <p className="text-sm text-muted-foreground">Inscrito em</p>
+                        <p className="text-sm font-medium">
+                          {new Date(participant.joinedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      {getPaymentStatusBadge(participant.paymentStatus)}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="ghost">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => removeParticipant(participant.id)}
+                          >
+                            <UserMinus className="w-4 h-4 mr-2" />
+                            Remover participante
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right hidden md:block">
-                      <p className="text-sm text-muted-foreground">Inscrito em</p>
-                      <p className="text-sm font-medium">
-                        {new Date(participant.joinedAt).toLocaleDateString()}
-                      </p>
+                ))}
+                
+                {/* Empty slots */}
+                {Array.from({ length: availableSlots }).map((_, index) => (
+                  <div 
+                    key={`empty-${index}`}
+                    className="flex items-center gap-4 p-4 rounded-lg border border-dashed bg-muted/30"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                      <Users className="w-6 h-6 text-muted-foreground" />
                     </div>
-                    {getPaymentStatusBadge(participant.paymentStatus)}
-                    <Button size="sm" variant="ghost">
-                      •••
-                    </Button>
+                    <p className="text-sm text-muted-foreground">Vaga disponível</p>
                   </div>
-                </div>
-              ))}
-              
-              {/* Empty slots */}
-              {Array.from({ length: availableSlots }).map((_, index) => (
-                <div 
-                  key={`empty-${index}`}
-                  className="flex items-center gap-4 p-4 rounded-lg border border-dashed bg-muted/30"
-                >
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                    <Users className="w-6 h-6 text-muted-foreground" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">Vaga disponível</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
+                ))}
+              </TabsContent>
+              <TabsContent value="stats" className="mt-0">
+                <ParticipantStatsTab />
+              </TabsContent>
+            </CardContent>
+          </Tabs>
         </Card>
 
         {/* Tournament Visualization */}
@@ -322,6 +383,20 @@ const TournamentDetails = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* Dialogs */}
+      <EditTournamentDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        tournament={tournament}
+        onSave={handleEditSave}
+      />
+      <CancelTournamentDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        tournamentName={tournament.name}
+        onConfirm={handleCancelTournament}
+      />
     </div>
   );
 };
