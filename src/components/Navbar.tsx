@@ -2,7 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export const Navbar = () => {
+interface NavbarProps {
+  isAuthenticated?: boolean;
+}
+
+export const Navbar = ({ isAuthenticated = false }: NavbarProps) => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-card border-b">
       <div className="container mx-auto px-4">
@@ -14,14 +18,16 @@ export const Navbar = () => {
             <span className="text-xl font-bold">Escrowzy</span>
           </Link>
 
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" asChild>
-              <Link to="/dashboard">Campeonatos</Link>
-            </Button>
-            <Button variant="default" asChild>
-              <Link to="/auth">Entrar</Link>
-            </Button>
-          </div>
+          {!isAuthenticated && (
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" asChild>
+                <Link to="/dashboard">Campeonatos</Link>
+              </Button>
+              <Button variant="default" asChild>
+                <Link to="/auth">Entrar</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </nav>
