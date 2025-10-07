@@ -11,6 +11,7 @@ import TournamentDetails from "./pages/TournamentDetails";
 import TournamentParticipantView from "./pages/TournamentParticipantView";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import FriendDetails from "./pages/FriendDetails";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/create-tournament" element={<CreateTournament />} />
           <Route path="/tournament/:id" element={<TournamentDetails />} />
           <Route path="/tournament/:id/participant" element={<TournamentParticipantView />} />
+          <Route path="/friend/:id" element={<FriendDetails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

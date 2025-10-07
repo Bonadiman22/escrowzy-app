@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,9 +11,9 @@ interface Friend {
   id: string;
   username: string;
   avatar?: string;
-  wins: number;
-  losses: number;
-  draws: number;
+  yourWins: number;
+  theirWins: number;
+  balance: number;
   online: boolean;
 }
 
@@ -20,31 +21,44 @@ const mockFriends: Friend[] = [
   {
     id: "friend-1",
     username: "ProPlayer123",
-    wins: 15,
-    losses: 8,
-    draws: 3,
+    yourWins: 8,
+    theirWins: 5,
+    balance: 120.50,
     online: true,
   },
   {
     id: "friend-2",
     username: "GamingMaster",
-    wins: 12,
-    losses: 12,
-    draws: 2,
+    yourWins: 4,
+    theirWins: 7,
+    balance: -85.00,
     online: false,
   },
   {
     id: "friend-3",
     username: "SkillzPlayer",
-    wins: 20,
-    losses: 5,
-    draws: 1,
+    yourWins: 10,
+    theirWins: 10,
+    balance: 0,
     online: true,
   },
 ];
 
 export const FriendsTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
+  const getBalanceColor = (balance: number) => {
+    if (balance > 0) return "text-success";
+    if (balance < 0) return "text-destructive";
+    return "text-muted-foreground";
+  };
+
+  const formatBalance = (balance: number) => {
+    if (balance > 0) return `+ R$ ${balance.toFixed(2)}`;
+    if (balance < 0) return `- R$ ${Math.abs(balance).toFixed(2)}`;
+    return `R$ ${balance.toFixed(2)}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -71,10 +85,14 @@ export const FriendsTab = () => {
 
       <div className="grid gap-3">
         {mockFriends.map((friend) => (
-          <Card key={friend.id} className="glass-card hover:shadow-lg transition-all">
+          <Card 
+            key={friend.id} 
+            className="glass-card hover:shadow-lg transition-all cursor-pointer"
+            onClick={() => navigate(`/friend/${friend.id}`)}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-1">
                   <div className="relative">
                     <Avatar className="w-12 h-12">
                       <AvatarImage src={friend.avatar} />
@@ -85,8 +103,8 @@ export const FriendsTab = () => {
                     )}
                   </div>
                   
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
                       <p className="font-semibold">{friend.username}</p>
                       {friend.online && (
                         <Badge className="bg-success/10 text-success border-success/20" variant="outline">
@@ -94,18 +112,25 @@ export const FriendsTab = () => {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 mt-1">
-                      <div className="flex items-center gap-1">
-                        <Swords className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          {friend.wins}V - {friend.losses}D - {friend.draws}E
+                    
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Swords className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium">
+                          Você {friend.yourWins}V vs {friend.theirWins}V Ele
+                        </span>
+                      </div>
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">Saldo vs Ele: </span>
+                        <span className={`font-semibold ${getBalanceColor(friend.balance)}`}>
+                          {formatBalance(friend.balance)}
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <Button variant="outline" size="sm">
                     <MessageCircle className="w-4 h-4" />
                   </Button>
