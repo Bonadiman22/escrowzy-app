@@ -196,7 +196,7 @@ export const FriendsTab = () => {
                   </Button>
                   <Button 
                     size="sm"
-                    className="flex-1 gradient-primary"
+                    className="flex-1 gradient-primary transition-all duration-300 hover:scale-105 hover:shadow-lg"
                   >
                     Desafiar
                   </Button>
