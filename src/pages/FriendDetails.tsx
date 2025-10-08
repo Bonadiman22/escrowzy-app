@@ -3,8 +3,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Trophy, TrendingUp, Gamepad2, Flame, Calendar } from "lucide-react";
+import { ArrowLeft, Trophy, TrendingUp, Gamepad2, Flame, Calendar, ChevronDown, DollarSign, Award, Snowflake } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // Mock data - em produção viria do backend
 const mockFriendData = {
@@ -24,9 +25,33 @@ const mockFriendData = {
     currentStreak: { type: "wins", count: 2 },
   },
   gameStats: [
-    { game: "EA FC 25", yourWins: 5, theirWins: 2 },
-    { game: "CS2", yourWins: 2, theirWins: 2 },
-    { game: "Valorant", yourWins: 1, theirWins: 1 },
+    { 
+      game: "EA FC 25", 
+      yourWins: 5, 
+      theirWins: 2,
+      balance: 80.00,
+      streak: { type: "wins", count: 3 },
+      biggestPrize: 100.00,
+      lastFiveMatches: ["win", "win", "win", "loss", "win"]
+    },
+    { 
+      game: "CS2", 
+      yourWins: 2, 
+      theirWins: 2,
+      balance: 0,
+      streak: { type: "draws", count: 0 },
+      biggestPrize: 50.00,
+      lastFiveMatches: ["win", "loss", "win", "loss", "draw"]
+    },
+    { 
+      game: "Valorant", 
+      yourWins: 1, 
+      theirWins: 1,
+      balance: -20.00,
+      streak: { type: "losses", count: 2 },
+      biggestPrize: 30.00,
+      lastFiveMatches: ["loss", "loss", "win", "draw", "draw"]
+    },
   ],
   matchHistory: [
     { id: 1, date: "2025-01-15", game: "EA FC 25", prize: 50.00, result: "win" },
@@ -173,31 +198,144 @@ export default function FriendDetails() {
         <Card className="glass-card mb-8">
           <CardContent className="pt-6">
             <h2 className="text-2xl font-bold mb-6">Desempenho por Jogo</h2>
-            <div className="space-y-6">
+            <Accordion type="single" collapsible className="space-y-4">
               {data.gameStats.map((stat) => {
                 const totalGames = stat.yourWins + stat.theirWins;
                 const yourPercentage = (stat.yourWins / totalGames) * 100;
                 
                 return (
-                  <div key={stat.game} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-lg">{stat.game}</h3>
-                      <span className="text-sm text-muted-foreground">
-                        {stat.yourWins}V - {stat.theirWins}D
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 relative">
-                        <Progress value={yourPercentage} className="h-3" />
+                  <AccordionItem key={stat.game} value={stat.game} className="border rounded-lg px-4">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center justify-between w-full pr-4">
+                        <div className="flex items-center gap-4 flex-1">
+                          <h3 className="font-semibold text-lg">{stat.game}</h3>
+                          <span className="text-sm text-muted-foreground">
+                            {stat.yourWins}V - {stat.theirWins}D
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 relative w-32">
+                            <Progress value={yourPercentage} className="h-3" />
+                          </div>
+                          <span className="text-sm font-medium min-w-[50px] text-right">
+                            {yourPercentage.toFixed(0)}%
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium min-w-[60px] text-right">
-                        {yourPercentage.toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4 pb-6">
+                      {/* Grade de 4 Cards de Estatística */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        {/* Card 1: Saldo no Jogo */}
+                        <Card className="bg-muted/30">
+                          <CardContent className="pt-4">
+                            <div className="flex items-start gap-3">
+                              <div className={`p-2 rounded-lg ${stat.balance > 0 ? 'bg-success/10' : stat.balance < 0 ? 'bg-destructive/10' : 'bg-muted'}`}>
+                                <DollarSign className={`w-5 h-5 ${stat.balance > 0 ? 'text-success' : stat.balance < 0 ? 'text-destructive' : 'text-muted-foreground'}`} />
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Saldo em {stat.game}</p>
+                                <p className={`text-xl font-bold ${getBalanceColor(stat.balance)}`}>
+                                  {formatBalance(stat.balance)}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Card 2: Sequência no Jogo */}
+                        <Card className="bg-muted/30">
+                          <CardContent className="pt-4">
+                            <div className="flex items-start gap-3">
+                              <div className={`p-2 rounded-lg ${stat.streak.type === 'wins' ? 'bg-success/10' : 'bg-destructive/10'}`}>
+                                {stat.streak.type === 'wins' ? (
+                                  <Flame className="w-5 h-5 text-success" />
+                                ) : (
+                                  <Snowflake className="w-5 h-5 text-destructive" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Sequência Atual em {stat.game}</p>
+                                <p className="text-xl font-bold">
+                                  {stat.streak.count > 0 ? (
+                                    <>
+                                      {stat.streak.count}{" "}
+                                      {stat.streak.type === 'wins' ? 'Vitórias' : 'Derrotas'}
+                                    </>
+                                  ) : (
+                                    'Empate'
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Card 3: Maior Prêmio no Jogo */}
+                        <Card className="bg-muted/30">
+                          <CardContent className="pt-4">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2 rounded-lg bg-warning/10">
+                                <Award className="w-5 h-5 text-warning" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Maior Prêmio em {stat.game}</p>
+                                <p className="text-xl font-bold">
+                                  R$ {stat.biggestPrize.toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Card 4: Últimas 5 Partidas */}
+                        <Card className="bg-muted/30">
+                          <CardContent className="pt-4">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2 rounded-lg bg-info/10">
+                                <Trophy className="w-5 h-5 text-info" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Desempenho Recente</p>
+                                <div className="flex gap-2 mt-2">
+                                  {stat.lastFiveMatches.map((result, index) => (
+                                    <div
+                                      key={index}
+                                      className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                        result === 'win' 
+                                          ? 'bg-success' 
+                                          : result === 'loss'
+                                          ? 'bg-destructive'
+                                          : 'bg-muted-foreground'
+                                      }`}
+                                      title={result === 'win' ? 'Vitória' : result === 'loss' ? 'Derrota' : 'Empate'}
+                                    >
+                                      <span className="text-white text-xs font-bold">
+                                        {result === 'win' ? 'V' : result === 'loss' ? 'D' : 'E'}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Estatísticas Avançadas (Placeholders) */}
+                      <div className="border-t pt-4">
+                        <h3 className="font-semibold text-sm mb-3 text-muted-foreground">Estatísticas Avançadas</h3>
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                          <p>• Média de K/D: <span className="italic">Em breve</span></p>
+                          <p>• Maior Goleada: <span className="italic">Em breve</span></p>
+                          <p>• Taxa de Comeback: <span className="italic">Em breve</span></p>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
                 );
               })}
-            </div>
+            </Accordion>
           </CardContent>
         </Card>
 
