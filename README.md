@@ -1,4 +1,66 @@
-# Welcome to your Lovable project
+# Escrowzy 🎮💸 - Repositório de Desenvolvimento
+
+**Bem-vindos ao desenvolvimento da Escrowzy! Este repositório serve como ponto central para o planejamento e desenvolvimento do back-end da nossa plataforma.**
+
+---
+
+### Status Atual do Projeto (Outubro de 2025)
+
+* ✅ **Front-End (UI/UX):** Design e protótipo funcional criados na plataforma No-Code **Lovable**. As principais telas e fluxos de usuário estão definidos e podem ser visualizados na pasta `/assets`.
+* ⏳ **Back-End:** **A iniciar.** O objetivo é construir a infraestrutura de back-end utilizando **Supabase**.
+* 🎯 **Próximo Objetivo:** Estruturar o banco de dados e iniciar o desenvolvimento da lógica de autenticação e criação de campeonatos.
+
+---
+
+### 📝 Roadmap de Desenvolvimento do Back-end
+
+Esta é a nossa lista de tarefas prioritárias. Vamos usar a aba "Issues" para detalhar cada item.
+
+- [ ] **Fase 1: Fundação**
+    - [ ] Definir e criar o esquema do banco de dados no Supabase (tabelas `users`, `tournaments`, `participants`, `transactions`).
+    - [ ] Implementar autenticação de usuários (Login com E-mail/Senha e Google).
+    - [ ] Criar API básica para gerenciamento de perfil de usuário.
+
+- [ ] **Fase 2: Lógica Principal**
+    - [ ] Desenvolver a lógica para criação de campeonatos e convites de amigos.
+    - [ ] Implementar o sistema de "carteira virtual" (wallet) associado ao usuário.
+    - [ ] Integrar com o Gateway de Pagamento para depósitos (funcionalidade de escrow).
+
+- [ ] **Fase 3: O Árbitro Virtual (MVP)**
+    - [ ] Criar a lógica para confirmação mútua de resultados de partidas.
+    - [ ] Desenvolver o fluxo de "disputa" para mediação manual.
+    - [ ] Implementar a liberação automática do pagamento para o vencedor após a confirmação.
+
+- [ ] **Fase 4: Expansão (Pós-MVP)**
+    - [ ] Pesquisar e integrar a primeira API de um jogo (ex: League of Legends) para automação de resultados.
+    - [ ] Desenvolver o sistema de campeonatos públicos.
+
+---
+
+### 👨‍💻 Para o Desenvolvedor de Back-end (Nosso Guia)
+
+O front-end no Lovable se comunicará com o back-end via API REST. O Supabase auto-gera grande parte dessa API a partir do banco de dados.
+
+Nossa lógica customizada (pagamentos, validação de regras, etc.) será construída utilizando **Supabase Edge Functions** (TypeScript/JavaScript), que ficarão versionadas aqui na pasta `/backend`.
+
+**Links Úteis:**
+* [Documentação do Supabase](https://supabase.com/docs)
+* [Guia sobre Edge Functions](https://supabase.com/docs/guides/functions)
+
+---
+
+### 🛠️ Tecnologias
+
+* **Front-End:** [Lovable](https://lovable.dev/)
+* **Back-End:** [Supabase](https://supabase.io/)
+* **Banco de Dados:** A definir (Ex: PostgreSQL)
+* **Gateway de Pagamento:** A definir (Ex: Stripe Connect, Pagar.me).
+
+---
+
+### 🖼️ Telas do Front-End
+
+As telas finalizadas do front-end estão na pasta `/assets` para referência visual.
 
 ## Project info
 
