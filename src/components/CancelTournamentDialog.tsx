@@ -29,7 +29,7 @@ export function CancelTournamentDialog({
     onConfirm();
     toast({
       title: "Campeonato cancelado",
-      description: "O campeonato foi cancelado e os participantes serão notificados. AAAAAAAAA",
+      description: "O campeonato foi cancelado e os participantes serão notificados.",
       variant: "destructive",
     });
     onOpenChange(false);
