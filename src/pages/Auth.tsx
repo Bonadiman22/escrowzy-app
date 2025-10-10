@@ -82,6 +82,10 @@ const Auth = () => {
                       <Input id="signup-email" type="email" placeholder="seu@email.com" required />
                     </div>
                     <div className="space-y-2">
+                      <Label htmlFor="signup-Cpf">Cpf</Label>
+                      <Input id="signup-Cpf" type="Cpf" placeholder="000.000.000-00" required />
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="signup-phone">Celular</Label>
                       <Input id="signup-phone" type="tel" placeholder="(11) 98765-4321" required />
                     </div>
