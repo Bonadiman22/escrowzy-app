@@ -15,7 +15,7 @@ app.use(express.json());
 // ✅ Configuração do CORS para permitir comunicação com o front
 app.use(
   cors({
-    origin: "http://localhost:5173", 
+    origin: "http://localhost:8080", 
     credentials: true,
   })
 );
