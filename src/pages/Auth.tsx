@@ -16,13 +16,13 @@ import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
 
 /*
-  Alterações principais aqui:
-  - Máscara manual para CPF e celular (sem dependências externas).
-  - Validação completa de CPF com cálculo de dígitos verificadores.
-  - Campos aceitam apenas números (limpeza automática).
-  - Mensagem de erro inline (cpfError / phoneError).
-  - Submissão bloqueada até validações passarem.
-  - Nota atualizada exatamente como solicitado.
+  Melhorias realizadas:
+  - Validação de todos os campos obrigatórios no signup (nome, email, cpf, celular, senha).
+  - Máscara para CPF e celular (sem libs externas).
+  - Validação completa do CPF (cálculo de dígitos).
+  - Erros inline para cada campo; foco no primeiro inválido.
+  - Submissão bloqueada até todos os campos estarem válidos.
+  - Mantivemos noValidate para evitar balões nativos do navegador.
 */
 
 const Auth = () => {
@@ -30,69 +30,59 @@ const Auth = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Campos controlados
+  // --- Signup state (campos controlados para validação) ---
+  const [name, setName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+
   const [cpf, setCpf] = useState("");
   const [cpfError, setCpfError] = useState<string | null>(null);
 
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
-  // Outros campos simples (não controlados aqui), mantendo comportamento anterior:
-  // name, email, password podem permanecer como uncontrolled inputs se preferir
-  // (aqui só controlei CPF e celular porque pediste validação/máscara).
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  // ---------- Helpers ----------
+  // --- Helpers de formatação e validação ---
 
-  // Remove tudo que não for dígito
   const onlyDigits = (value: string) => value.replace(/\D/g, "");
 
-  // Formata CPF como 000.000.000-00
+  // Formata CPF progressivamente: 000.000.000-00
   const formatCpf = (value: string) => {
-    const digits = onlyDigits(value).slice(0, 11); // máximo 11
-    let formatted = digits;
+    const digits = onlyDigits(value).slice(0, 11);
     if (digits.length > 9) {
-      formatted = `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+      return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
     } else if (digits.length > 6) {
-      formatted = `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+      return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
     } else if (digits.length > 3) {
-      formatted = `${digits.slice(0, 3)}.${digits.slice(3)}`;
+      return `${digits.slice(0, 3)}.${digits.slice(3)}`;
     }
-    return formatted;
+    return digits;
   };
 
-  // Formata celular:
-  // - se 11 dígitos -> (00) 00000-0000
-  // - se 10 dígitos -> (00) 0000-0000
-  // - formata progressivamente conforme digita
+  // Formata celular progressivamente
   const formatPhone = (value: string) => {
-    const digits = onlyDigits(value).slice(0, 11); // máximo 11
+    const digits = onlyDigits(value).slice(0, 11);
     if (digits.length <= 2) return digits;
-    if (digits.length <= 6) {
-      return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    }
-    if (digits.length <= 10) {
-      // (00) 0000-0000
-      return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-    }
-    // 11 dígitos (celular com 9º dígito)
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`; // 11 dígitos
   };
 
-  // Validação completa do CPF (dígitos verificadores)
+  // Validação CPF com cálculo de dígitos verificadores
   const validateCpfDigits = (rawCpf: string) => {
     const s = onlyDigits(rawCpf);
     if (s.length !== 11) return false;
-
-    // rejeita sequências iguais (ex: 11111111111)
-    if (/^(\d)\1{10}$/.test(s)) return false;
+    if (/^(\d)\1{10}$/.test(s)) return false; // rejeita sequências iguais
 
     const calcDigit = (sliceLen: number) => {
       const nums = s.slice(0, sliceLen).split("").map(Number);
       const factorStart = sliceLen + 1;
       let sum = 0;
-      for (let i = 0; i < nums.length; i++) {
-        sum += nums[i] * (factorStart - i);
-      }
+      for (let i = 0; i < nums.length; i++) sum += nums[i] * (factorStart - i);
       const result = 11 - (sum % 11);
       return result >= 10 ? 0 : result;
     };
@@ -102,75 +92,133 @@ const Auth = () => {
     return d1 === Number(s[9]) && d2 === Number(s[10]);
   };
 
-  // Validação simples de celular: mínimo 10 dígitos (DDD + nº) ou 11 se tiver 9º dígito.
+  // Validação celular: 10 ou 11 dígitos (DDD + número)
   const validatePhoneDigits = (rawPhone: string) => {
     const s = onlyDigits(rawPhone);
     return s.length === 10 || s.length === 11;
   };
 
-  // ---------- Handlers ----------
+  // Validação email simples
+  const validateEmail = (value: string) => {
+    // Regex simples e eficiente para maioria dos emails
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
 
-  // Quando usuário digita no CPF
+  // Validação senha (exemplo: mínimo 6 caracteres)
+  const validatePassword = (value: string) => value.length >= 6;
+
+  // --- Handlers de input (mantêm apenas dígitos em cpf e phone) ---
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    // mantém apenas números e formata
-    const formatted = formatCpf(raw);
+    const formatted = formatCpf(e.target.value);
     setCpf(formatted);
-    // limpeza de erro enquanto digita
     if (cpfError) setCpfError(null);
   };
 
-  // Quando usuário sai do campo CPF (onBlur) validamos
   const handleCpfBlur = () => {
-    const isValid = validateCpfDigits(cpf);
-    if (!isValid) {
-      setCpfError("CPF inválido. Verifique e tente novamente.");
-    } else {
-      setCpfError(null);
+    if (cpf === "") {
+      setCpfError("CPF é obrigatório.");
+      return;
     }
+    if (!validateCpfDigits(cpf)) setCpfError("CPF inválido. Verifique e tente novamente.");
+    else setCpfError(null);
   };
 
-  // Quando usuário digita no celular
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    const formatted = formatPhone(raw);
+    const formatted = formatPhone(e.target.value);
     setPhone(formatted);
     if (phoneError) setPhoneError(null);
   };
 
   const handlePhoneBlur = () => {
-    const ok = validatePhoneDigits(phone);
-    if (!ok) {
-      setPhoneError("Celular inválido. Informe o DDD e o número (10 ou 11 dígitos).");
-    } else {
-      setPhoneError(null);
+    if (phone === "") {
+      setPhoneError("Celular é obrigatório.");
+      return;
     }
+    if (!validatePhoneDigits(phone)) setPhoneError("Celular inválido. Informe DDD + número (10 ou 11 dígitos).");
+    else setPhoneError(null);
   };
 
-  // Função de submissão: bloqueia se CPF ou celular inválidos
+  // Outros campos - handlers
+  const handleNameBlur = () => {
+    if (!name.trim()) setNameError("Nome é obrigatório.");
+    else setNameError(null);
+  };
+
+  const handleEmailBlur = () => {
+    if (!email.trim()) {
+      setEmailError("Email é obrigatório.");
+      return;
+    }
+    if (!validateEmail(email)) setEmailError("Email inválido.");
+    else setEmailError(null);
+  };
+
+  const handlePasswordBlur = () => {
+    if (!password) setPasswordError("Senha é obrigatória.");
+    else if (!validatePassword(password)) setPasswordError("A senha deve ter ao menos 6 caracteres.");
+    else setPasswordError(null);
+  };
+
+  // --- Valida tudo e foca o primeiro inválido ---
+  const validateAllSignup = () => {
+    const errors: Array<{ fieldId: string; message: string }> = [];
+
+    if (!name.trim()) errors.push({ fieldId: "signup-name", message: "Nome é obrigatório." });
+    if (!email.trim()) errors.push({ fieldId: "signup-email", message: "Email é obrigatório." });
+    else if (!validateEmail(email)) errors.push({ fieldId: "signup-email", message: "Email inválido." });
+
+    if (!cpf.trim()) errors.push({ fieldId: "signup-cpf", message: "CPF é obrigatório." });
+    else if (!validateCpfDigits(cpf)) errors.push({ fieldId: "signup-cpf", message: "CPF inválido." });
+
+    if (!phone.trim()) errors.push({ fieldId: "signup-phone", message: "Celular é obrigatório." });
+    else if (!validatePhoneDigits(phone)) errors.push({ fieldId: "signup-phone", message: "Celular inválido." });
+
+    if (!password) errors.push({ fieldId: "signup-password", message: "Senha é obrigatória." });
+    else if (!validatePassword(password)) errors.push({ fieldId: "signup-password", message: "A senha deve ter ao menos 6 caracteres." });
+
+    // Atualiza estados de erro inline para mostrar mensagens perto de cada campo
+    setNameError(errors.find((e) => e.fieldId === "signup-name")?.message ?? null);
+    setEmailError(errors.find((e) => e.fieldId === "signup-email")?.message ?? null);
+    setCpfError(errors.find((e) => e.fieldId === "signup-cpf")?.message ?? null);
+    setPhoneError(errors.find((e) => e.fieldId === "signup-phone")?.message ?? null);
+    setPasswordError(errors.find((e) => e.fieldId === "signup-password")?.message ?? null);
+
+    // If any, focus the first invalid
+    if (errors.length > 0) {
+      const first = errors[0];
+      const el = document.getElementById(first.fieldId) as HTMLInputElement | null;
+      if (el) el.focus();
+    }
+
+    return errors.length === 0;
+  };
+
+  // --- Submissão (login/signup) ---
   const handleAuth = async (e: React.FormEvent, type: "login" | "signup") => {
     e.preventDefault();
 
-    // Se for "signup", validamos CPF e celular (no login apenas email/senha)
     if (type === "signup") {
-      const cpfOk = validateCpfDigits(cpf);
-      const phoneOk = validatePhoneDigits(phone);
-
-      if (!cpfOk) {
-        setCpfError("CPF inválido. Verifique e tente novamente.");
-      }
-
-      if (!phoneOk) {
-        setPhoneError("Celular inválido. Informe o DDD e o número (10 ou 11 dígitos).");
-      }
-
-      if (!cpfOk || !phoneOk) {
-        // Mostra um toast curto e interrompe envio
+      const ok = validateAllSignup();
+      if (!ok) {
         toast({
           title: "Corrija os campos",
-          description: "Verifique CPF e celular antes de continuar.",
+          description: "Por favor verifique os campos destacados antes de continuar.",
         });
-        return; // não prossegue
+        return;
+      }
+    } else {
+      // Login: validações simples (email e senha)
+      const loginEmail = (document.getElementById("login-email") as HTMLInputElement | null)?.value ?? "";
+      const loginPassword = (document.getElementById("login-password") as HTMLInputElement | null)?.value ?? "";
+      if (!loginEmail || !loginPassword) {
+        toast({
+          title: "Preencha email e senha",
+          description: "É necessário informar email e senha para entrar.",
+        });
+        // foca campo vazio
+        if (!loginEmail) (document.getElementById("login-email") as HTMLInputElement | null)?.focus();
+        else (document.getElementById("login-password") as HTMLInputElement | null)?.focus();
+        return;
       }
     }
 
@@ -181,20 +229,17 @@ const Auth = () => {
       toast({
         title: type === "login" ? "Login realizado!" : "Conta criada!",
         description:
-          type === "login"
-            ? "Bem-vindo de volta"
-            : "Sua conta foi criada com sucesso",
+          type === "login" ? "Bem-vindo de volta" : "Sua conta foi criada com sucesso",
       });
       setIsLoading(false);
       navigate("/dashboard");
-    }, 1500);
+    }, 1200);
   };
 
-  // ---------- JSX ----------
+  // --- JSX ---
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
       <main className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-md mx-auto animate-slide-up">
           <Tabs defaultValue="login" className="w-full">
@@ -211,27 +256,18 @@ const Auth = () => {
                   <CardDescription>Entre com suas credenciais</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form
-                    onSubmit={(e) => handleAuth(e, "login")}
-                    className="space-y-4"
-                    // Removemos atributos nativos de validação; tratamos via JS
-                    noValidate
-                  >
+                  <form onSubmit={(e) => handleAuth(e, "login")} className="space-y-4" noValidate>
                     <div className="space-y-2">
                       <Label htmlFor="login-email">Email</Label>
-                      <Input id="login-email" type="email" placeholder="seu@email.com" required />
+                      <Input id="login-email" type="email" placeholder="seu@email.com" />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="login-password">Senha</Label>
-                      <Input id="login-password" type="password" required />
+                      <Input id="login-password" type="password" />
                     </div>
 
-                    <Button
-                      type="submit"
-                      className="w-full gradient-primary"
-                      disabled={isLoading}
-                    >
+                    <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>
                       {isLoading ? "Entrando..." : "Entrar"}
                     </Button>
                   </form>
@@ -247,24 +283,37 @@ const Auth = () => {
                   <CardDescription>Cadastre-se para começar</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form
-                    onSubmit={(e) => handleAuth(e, "signup")}
-                    className="space-y-4"
-                    noValidate // evita avisos nativos do navegador
-                  >
+                  <form onSubmit={(e) => handleAuth(e, "signup")} className="space-y-4" noValidate>
                     <div className="space-y-2">
                       <Label htmlFor="signup-name">Nome Completo</Label>
-                      <Input id="signup-name" type="text" placeholder="João Silva" required />
+                      <Input
+                        id="signup-name"
+                        type="text"
+                        placeholder="João Silva"
+                        value={name}
+                        onChange={(ev) => { setName(ev.target.value); if (nameError) setNameError(null); }}
+                        onBlur={handleNameBlur}
+                        aria-invalid={!!nameError}
+                      />
+                      {nameError && <p className="text-sm text-red-500 mt-1">{nameError}</p>}
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email</Label>
-                      <Input id="signup-email" type="email" placeholder="seu@email.com" required />
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={email}
+                        onChange={(ev) => { setEmail(ev.target.value); if (emailError) setEmailError(null); }}
+                        onBlur={handleEmailBlur}
+                        aria-invalid={!!emailError}
+                      />
+                      {emailError && <p className="text-sm text-red-500 mt-1">{emailError}</p>}
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="signup-cpf">CPF</Label>
-                      {/* CPF é controlado; só permite números e máscara */}
                       <Input
                         id="signup-cpf"
                         type="text"
@@ -272,14 +321,12 @@ const Auth = () => {
                         value={cpf}
                         onChange={handleCpfChange}
                         onBlur={handleCpfBlur}
-                        inputMode="numeric" // sugere teclado numérico em mobile
-                        required
+                        inputMode="numeric"
+                        aria-invalid={!!cpfError}
                       />
-                      {/* Nota pedida (texto exato) */}
                       <p className="text-xs text-muted-foreground">
                         Nota: seu CPF será usado como chave PIX principal por padrão.
                       </p>
-                      {/* Mensagem inline de erro */}
                       {cpfError && <p className="text-sm text-red-500 mt-1">{cpfError}</p>}
                     </div>
 
@@ -293,21 +340,26 @@ const Auth = () => {
                         onChange={handlePhoneChange}
                         onBlur={handlePhoneBlur}
                         inputMode="tel"
-                        required
+                        aria-invalid={!!phoneError}
                       />
                       {phoneError && <p className="text-sm text-red-500 mt-1">{phoneError}</p>}
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="signup-password">Senha</Label>
-                      <Input id="signup-password" type="password" required />
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="min 6 caracteres"
+                        value={password}
+                        onChange={(ev) => { setPassword(ev.target.value); if (passwordError) setPasswordError(null); }}
+                        onBlur={handlePasswordBlur}
+                        aria-invalid={!!passwordError}
+                      />
+                      {passwordError && <p className="text-sm text-red-500 mt-1">{passwordError}</p>}
                     </div>
 
-                    <Button
-                      type="submit"
-                      className="w-full gradient-primary"
-                      disabled={isLoading}
-                    >
+                    <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>
                       {isLoading ? "Criando..." : "Criar Conta"}
                     </Button>
                   </form>
