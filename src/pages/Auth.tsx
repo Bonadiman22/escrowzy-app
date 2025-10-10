@@ -1,61 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// O import abaixo foi removido para resolver o erro de compilação
-// import { Navbar } from "@/components/Navbar"; 
-import { useToast } from "@/hooks/use-toast";
-// import { api } from "@/lib/api"; // Removido: O objeto 'api' não é usado na função handleAuth (que usa setTimeout para simular a resposta) e estava a causar o erro de compilação persistente.
 
-// Componente Navbar simples definido localmente para evitar o erro de resolução de alias de caminho.
-const Navbar = () => {
-  return (
-    <header className="fixed top-0 left-0 right-0 z-10 border-b bg-white/80 backdrop-blur-md shadow-sm">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-indigo-600">App Financeiro</h1>
-      </div>
-    </header>
-  );
-};
-
-/*
-  Melhorias realizadas:
-  - Validação de todos os campos obrigatórios no signup (nome, email, cpf, celular, senha).
-  - Máscara para CPF e celular (sem libs externas).
-  - Validação completa do CPF (cálculo de dígitos).
-  - Erros inline para cada campo; foco no primeiro inválido.
-  - Submissão bloqueada até todos os campos estarem válidos.
-  - Mantivemos noValidate para evitar balões nativos do navegador.
-*/
-
-const Auth = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-
-  // --- Signup state (campos controlados para validação) ---
-  const [name, setName] = useState("");
-  const [nameError, setNameError] = useState<string | null>(null);
-
-  const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState<string | null>(null);
-
-  const [cpf, setCpf] = useState("");
-  const [cpfError, setCpfError] = useState<string | null>(null);
-
-  const [phone, setPhone] = useState("");
-  const [phoneError, setPhoneError] = useState<string | null>(null);
-
-  const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // --- Helpers de formatação e validação ---
@@ -209,9 +152,6 @@ const Auth = () => {
   const handleAuth = async (e: React.FormEvent, type: "login" | "signup") => {
     e.preventDefault();
 
-    let payload: Record<string, string> = {};
-    const apiEndpoint = type === "signup" ? "/api/auth/signup" : "/api/auth/login";
-
     if (type === "signup") {
       const ok = validateAllSignup();
       if (!ok) {
@@ -221,19 +161,10 @@ const Auth = () => {
         });
         return;
       }
-      // Prepara payload de registo (signup)
-      payload = {
-        name,
-        email: email.trim(),
-        cpf: onlyDigits(cpf), // Envia apenas dígitos
-        phone: onlyDigits(phone), // Envia apenas dígitos
-        password,
-      };
     } else {
-      // Login: validações simples e recolha de dados do DOM
+      // Login: validações simples (email e senha)
       const loginEmail = (document.getElementById("login-email") as HTMLInputElement | null)?.value ?? "";
       const loginPassword = (document.getElementById("login-password") as HTMLInputElement | null)?.value ?? "";
-
       if (!loginEmail || !loginPassword) {
         toast({
           title: "Preencha email e senha",
@@ -244,72 +175,20 @@ const Auth = () => {
         else (document.getElementById("login-password") as HTMLInputElement | null)?.focus();
         return;
       }
-      // Prepara payload de login
-      payload = {
-        email: loginEmail,
-        password: loginPassword,
-      };
     }
 
     setIsLoading(true);
 
-    try {
-      // Chamada real à API (endpoints fictícios)
-      const response = await fetch(apiEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      // Trata erros de resposta do servidor (ex: 400 Bad Request, 401 Unauthorized)
-      if (!response.ok) {
-        let errorMessage = "Ocorreu um erro no servidor.";
-        try {
-          const errorData = await response.json();
-          // Assume que a API retorna um objeto JSON com uma propriedade 'message'
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          // Fallback para o status text em caso de resposta não-JSON
-          errorMessage = `${response.status}: ${response.statusText}`;
-        }
-
-        toast({
-          title: type === "login" ? "Falha na Autenticação" : "Falha no Registo",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Sucesso (Resposta 2xx)
-      const data = await response.json();
-      console.log("Auth Success:", data); 
-      
-      // Ação: Salvar token e redirecionar
-      // Em uma aplicação real, você salvaria o token/dados do utilizador aqui (e.g., em um Contexto ou Redux)
-
+    // Simulação de requisição (substituir por chamada real ao Supabase)
+    setTimeout(() => {
       toast({
         title: type === "login" ? "Login realizado!" : "Conta criada!",
         description:
-          type === "login"
-            ? "Bem-vindo de volta! Redirecionando..."
-            : "Sua conta foi criada com sucesso! Redirecionando...",
+          type === "login" ? "Bem-vindo de volta" : "Sua conta foi criada com sucesso",
       });
-      navigate("/dashboard");
-
-    } catch (error) {
-      // Trata erros de rede (ex: servidor offline, falha de conexão)
-      console.error("Authentication failed:", error);
-      toast({
-        title: "Erro de Comunicação",
-        description: "Não foi possível conectar ao servidor. Verifique sua conexão.",
-        variant: "destructive",
-      });
-    } finally {
       setIsLoading(false);
-    }
+      navigate("/dashboard");
+    }, 1200);
   };
 
   // --- JSX ---
@@ -448,3 +327,5 @@ const Auth = () => {
     </div>
   );
 };
+
+export default Auth;
