@@ -1,0 +1,6 @@
+
+DB_NAME=postgres
+DB_USER=postgres
+DB_PASS=3pGoCwE9bmmFk8NE
+DB_HOST=db.wtfncsttoawxmjdilwwk.supabase.co
+PORT=5000
