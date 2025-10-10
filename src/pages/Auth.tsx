@@ -1,4 +1,50 @@
+// src/pages/Auth.tsx
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Navbar } from "@/components/Navbar";
+import { useToast } from "@/hooks/use-toast";
+import { api } from "@/pages/api"; 
 
+/*
+  Melhorias realizadas:
+  - Validação de todos os campos obrigatórios no signup (nome, email, cpf, celular, senha).
+  - Máscara para CPF e celular (sem libs externas).
+  - Validação completa do CPF (cálculo de dígitos).
+  - Erros inline para cada campo; foco no primeiro inválido.
+  - Submissão bloqueada até todos os campos estarem válidos.
+  - Mantivemos noValidate para evitar balões nativos do navegador.
+*/
+
+const Auth = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // --- Signup state (campos controlados para validação) ---
+  const [name, setName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const [cpf, setCpf] = useState("");
+  const [cpfError, setCpfError] = useState<string | null>(null);
+
+  const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // --- Helpers de formatação e validação ---
