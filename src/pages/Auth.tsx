@@ -209,6 +209,9 @@ const Auth = () => {
   const handleAuth = async (e: React.FormEvent, type: "login" | "signup") => {
     e.preventDefault();
 
+    let payload: Record<string, string> = {};
+    const apiEndpoint = type === "signup" ? "/api/auth/signup" : "/api/auth/login";
+
     if (type === "signup") {
       const ok = validateAllSignup();
       if (!ok) {
@@ -218,11 +221,19 @@ const Auth = () => {
         });
         return;
       }
+      // Prepara payload de registo (signup)
+      payload = {
+        name,
+        email: email.trim(),
+        cpf: onlyDigits(cpf), // Envia apenas dígitos
+        phone: onlyDigits(phone), // Envia apenas dígitos
+        password,
+      };
     } else {
-      // Login: validações simples (email e senha)
-      // Nota: No separador de login, os inputs não são controlados pelo estado, lemos diretamente do DOM.
+      // Login: validações simples e recolha de dados do DOM
       const loginEmail = (document.getElementById("login-email") as HTMLInputElement | null)?.value ?? "";
       const loginPassword = (document.getElementById("login-password") as HTMLInputElement | null)?.value ?? "";
+
       if (!loginEmail || !loginPassword) {
         toast({
           title: "Preencha email e senha",
@@ -233,22 +244,72 @@ const Auth = () => {
         else (document.getElementById("login-password") as HTMLInputElement | null)?.focus();
         return;
       }
+      // Prepara payload de login
+      payload = {
+        email: loginEmail,
+        password: loginPassword,
+      };
     }
 
     setIsLoading(true);
 
-    // Simulação de requisição (substituir por chamada real ao Supabase)
-    setTimeout(() => {
-      // Aqui seria o local para chamar a sua API real e salvar o token.
+    try {
+      // Chamada real à API (endpoints fictícios)
+      const response = await fetch(apiEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      // Trata erros de resposta do servidor (ex: 400 Bad Request, 401 Unauthorized)
+      if (!response.ok) {
+        let errorMessage = "Ocorreu um erro no servidor.";
+        try {
+          const errorData = await response.json();
+          // Assume que a API retorna um objeto JSON com uma propriedade 'message'
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // Fallback para o status text em caso de resposta não-JSON
+          errorMessage = `${response.status}: ${response.statusText}`;
+        }
+
+        toast({
+          title: type === "login" ? "Falha na Autenticação" : "Falha no Registo",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Sucesso (Resposta 2xx)
+      const data = await response.json();
+      console.log("Auth Success:", data); 
       
+      // Ação: Salvar token e redirecionar
+      // Em uma aplicação real, você salvaria o token/dados do utilizador aqui (e.g., em um Contexto ou Redux)
+
       toast({
         title: type === "login" ? "Login realizado!" : "Conta criada!",
         description:
-          type === "login" ? "Bem-vindo de volta" : "Sua conta foi criada com sucesso",
+          type === "login"
+            ? "Bem-vindo de volta! Redirecionando..."
+            : "Sua conta foi criada com sucesso! Redirecionando...",
       });
-      setIsLoading(false);
       navigate("/dashboard");
-    }, 1200);
+
+    } catch (error) {
+      // Trata erros de rede (ex: servidor offline, falha de conexão)
+      console.error("Authentication failed:", error);
+      toast({
+        title: "Erro de Comunicação",
+        description: "Não foi possível conectar ao servidor. Verifique sua conexão.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // --- JSX ---
@@ -387,5 +448,3 @@ const Auth = () => {
     </div>
   );
 };
-
-export default Auth;
