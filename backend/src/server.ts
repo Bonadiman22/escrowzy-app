@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes";
-import { sequelize, testConnection } from "./config/db";
 import { User } from "./models/User";
 
 dotenv.config();
@@ -28,8 +27,6 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, async () => {
   try {
-    await testConnection(); // Testa conexão com o banco
-    await sequelize.sync(); // Cria tabelas se não existirem
     console.log(`🔥 Servidor rodando na porta ${PORT}`);
   } catch (error) {
     console.error("❌ Erro ao iniciar servidor:", error);
