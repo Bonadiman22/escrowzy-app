@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/pages/api"; 
+import { api } from "@/pages/apiClient.ts"; 
 
 /*
   Melhorias realizadas:
