@@ -15,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "../pages/apiClient.ts"; 
-import { supabase } from "@/integrations/supabase/client"; 
 
 /*
   Melhorias realizadas:
@@ -195,95 +194,48 @@ const Auth = () => {
     return errors.length === 0;
   };
 
- 
+  // --- Submissão (login/signup) ---
+  const handleAuth = async (e: React.FormEvent, type: "login" | "signup") => {
+    e.preventDefault();
 
-// --- Submissão (login/signup) ---
-const handleAuth = async (e: React.FormEvent, type: "login" | "signup") => {
-  e.preventDefault();
-
-  if (type === "signup") {
-    const ok = validateAllSignup();
-    if (!ok) {
-      toast({
-        title: "Corrija os campos",
-        description: "Por favor verifique os campos destacados antes de continuar.",
-      });
-      return;
-    }
-  } else {
-    const loginEmail =
-      (document.getElementById("login-email") as HTMLInputElement | null)?.value ?? "";
-    const loginPassword =
-      (document.getElementById("login-password") as HTMLInputElement | null)?.value ?? "";
-    if (!loginEmail || !loginPassword) {
-      toast({
-        title: "Preencha email e senha",
-        description: "É necessário informar email e senha para entrar.",
-      });
-      if (!loginEmail)
-        (document.getElementById("login-email") as HTMLInputElement | null)?.focus();
-      else
-        (document.getElementById("login-password") as HTMLInputElement | null)?.focus();
-      return;
-    }
-  }
-
-  setIsLoading(true);
-
-  try {
     if (type === "signup") {
-      // ✅ Cadastro no Supabase com email e senha
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-            cpf,
-            phone,
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Conta criada!",
-        description: "Sua conta foi criada com sucesso.",
-      });
-      navigate("/dashboard");
-
+      const ok = validateAllSignup();
+      if (!ok) {
+        toast({
+          title: "Corrija os campos",
+          description: "Por favor verifique os campos destacados antes de continuar.",
+        });
+        return;
+      }
     } else {
-      // ✅ Login no Supabase
-      const loginEmail =
-        (document.getElementById("login-email") as HTMLInputElement)?.value ?? "";
-      const loginPassword =
-        (document.getElementById("login-password") as HTMLInputElement)?.value ?? "";
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Login realizado!",
-        description: "Bem-vindo de volta.",
-      });
-      navigate("/dashboard");
+      // Login: validações simples (email e senha)
+      const loginEmail = (document.getElementById("login-email") as HTMLInputElement | null)?.value ?? "";
+      const loginPassword = (document.getElementById("login-password") as HTMLInputElement | null)?.value ?? "";
+      if (!loginEmail || !loginPassword) {
+        toast({
+          title: "Preencha email e senha",
+          description: "É necessário informar email e senha para entrar.",
+        });
+        // foca campo vazio
+        if (!loginEmail) (document.getElementById("login-email") as HTMLInputElement | null)?.focus();
+        else (document.getElementById("login-password") as HTMLInputElement | null)?.focus();
+        return;
+      }
     }
-  } catch (err: any) {
-    toast({
-      title: "Erro",
-      description: err.message || "Ocorreu um erro. Tente novamente.",
-      variant: "destructive",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
 
+    setIsLoading(true);
+
+    // Simulação de requisição (substituir por chamada real ao Supabase)
+    setTimeout(() => {
+      toast({
+        title: type === "login" ? "Login realizado!" : "Conta criada!",
+        description:
+          type === "login" ? "Bem-vindo de volta" : "Sua conta foi criada com sucesso",
+      });
+      setIsLoading(false);
+      navigate("/dashboard");
+    }, 1200);
+  };
 
   // --- JSX ---
   return (
