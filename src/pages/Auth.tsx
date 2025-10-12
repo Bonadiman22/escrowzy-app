@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "../pages/apiClient.ts"; 
+import { supabase } from "@/integrations/supabase/client"; 
 
 /*
   Melhorias realizadas:
@@ -194,48 +194,106 @@ const Auth = () => {
     return errors.length === 0;
   };
 
-  // --- Submissão (login/signup) ---
-  const handleAuth = async (e: React.FormEvent, type: "login" | "signup") => {
-    e.preventDefault();
+ 
 
-    if (type === "signup") {
-      const ok = validateAllSignup();
-      if (!ok) {
-        toast({
-          title: "Corrija os campos",
-          description: "Por favor verifique os campos destacados antes de continuar.",
-        });
-        return;
-      }
-    } else {
-      // Login: validações simples (email e senha)
-      const loginEmail = (document.getElementById("login-email") as HTMLInputElement | null)?.value ?? "";
-      const loginPassword = (document.getElementById("login-password") as HTMLInputElement | null)?.value ?? "";
-      if (!loginEmail || !loginPassword) {
-        toast({
-          title: "Preencha email e senha",
-          description: "É necessário informar email e senha para entrar.",
-        });
-        // foca campo vazio
-        if (!loginEmail) (document.getElementById("login-email") as HTMLInputElement | null)?.focus();
-        else (document.getElementById("login-password") as HTMLInputElement | null)?.focus();
-        return;
-      }
-    }
+// --- Submissão (login/signup) ---
+const handleAuth = async (e: React.FormEvent, type: "login" | "signup") => {
+  e.preventDefault();
 
-    setIsLoading(true);
-
-    // Simulação de requisição (substituir por chamada real ao Supabase)
-    setTimeout(() => {
+  if (type === "signup") {
+    const ok = validateAllSignup();
+    if (!ok) {
       toast({
-        title: type === "login" ? "Login realizado!" : "Conta criada!",
-        description:
-          type === "login" ? "Bem-vindo de volta" : "Sua conta foi criada com sucesso",
+        title: "Corrija os campos",
+        description: "Por favor verifique os campos destacados antes de continuar.",
       });
-      setIsLoading(false);
+      return;
+    }
+  } else {
+    const loginEmail =
+      (document.getElementById("login-email") as HTMLInputElement | null)?.value ?? "";
+    const loginPassword =
+      (document.getElementById("login-password") as HTMLInputElement | null)?.value ?? "";
+    if (!loginEmail || !loginPassword) {
+      toast({
+        title: "Preencha email e senha",
+        description: "É necessário informar email e senha para entrar.",
+      });
+      if (!loginEmail)
+        (document.getElementById("login-email") as HTMLInputElement | null)?.focus();
+      else
+        (document.getElementById("login-password") as HTMLInputElement | null)?.focus();
+      return;
+    }
+  }
+
+  setIsLoading(true);
+
+  try {
+    if (type === "signup") {
+      // ✅ Cadastro no Supabase com email e senha
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            cpf:onlyDigits(cpf),
+            phone:onlyDigits(phone),
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Conta criada!",
+        description: "Sua conta foi criada com sucesso.",
+      });
+      
+
+    } else {
+      // ✅ Login no Supabase
+      const loginEmail =
+        (document.getElementById("login-email") as HTMLInputElement)?.value ?? "";
+      const loginPassword =
+        (document.getElementById("login-password") as HTMLInputElement)?.value ?? "";
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Login realizado!",
+        description: "Bem-vindo de volta.",
+      });
       navigate("/dashboard");
-    }, 1200);
-  };
+    }
+  } catch (err: any) {
+    let errorMessage = "Ocorreu um erro. Tente novamente.";
+    if (err.Message)  {
+        if (err.message.includes("Login ivalido")) {
+                errorMessage = "Credenciais inválidas. Verifique seu email/senha ou se você **confirmou o link enviado para seu e-mail**.";
+            } else if (err.message.includes("User already registered")) {
+                errorMessage = "Este e-mail já está cadastrado. Tente fazer o login.";
+            } else {
+                errorMessage = err.message;
+            }
+        }
+        
+    toast({
+      title: "Erro",
+      description: errMessage || "Ocorreu um erro. Tente novamente.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   // --- JSX ---
   return (
