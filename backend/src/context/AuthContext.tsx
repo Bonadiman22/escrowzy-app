@@ -1,39 +1,46 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, User as FBUser } from 'firebase/auth';
 import { User, LogIn, LogOut, UserPlus, Home, Loader } from 'lucide-react';
 
-// --- CONFIGURAÇÃO FIREBASE (Apenas Boilerplate para aderir às regras do ambiente) ---
-// O sistema de Auth real neste arquivo é o mockContext, mas a inicialização é mantida.
+
+ export interface User {
+    id: string;
+    name: string;
+    email: string;
+}
+
+interface AuthData {
+    user: User | null;
+    token: string | null;
+}       
+
+export interface AuthContextType {
+    user: User | null;
+    login: (email: string, password: string) => Promise<void>;
+    register: (name: string, cpf: string, email: string, password: string) => Promise<void>;
+    logout: () => void;
+}
+
+// --- CONFIGURAÇÃO FIREBASE (Apenas Boilerplate para aderir às regras do ambiente) -
+// Tipagem para constantes globais
+declare const __app_id: string | undefined; 
+declare const __firebase_config: string | undefined; // JSON string
+declare const __initial_auth_token: string | null | undefined;  
+
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+const initialAuthToken: string |null = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
 const app = Object.keys(firebaseConfig).length > 0 ? initializeApp(firebaseConfig) : null;
 const auth = app ? getAuth(app) : null;
 
 // --- DADOS DE SIMULAÇÃO E CLIENTE MOCK API ---
+let mockAuthData: AuthData | null = null; // Simula o "armazenamento" do token e do usuário
 
-/**
- * @typedef {{id: string, name: string, email: string}} User
- * @typedef {{user: User | null, token: string | null}} AuthData
- */
-
-/** @type {AuthData | null} */
-let mockAuthData = null; // Simula o armazenamento persistente do token/usuário
-
-/**
- * Simula um cliente API para Login/Registro/Perfil.
- * Utiliza promessas para imitar chamadas assíncronas reais.
- */
 const mockApi = {
-    /**
-     * @param {string} endpoint
-     * @param {object} [data]
-     * @returns {Promise<{data: any}>}
-     */
-    post: (endpoint, data) => new Promise((resolve, reject) => {
-        setTimeout(() => { // Simula atraso de rede
+      post: (endpoint, data?: any) : Promise<{data: any}> => new Promise((resolve, reject) => {
+        setTimeout(() => { 
             if (endpoint === "/auth/login") {
                 if (data.email === "teste@exemplo.com" && data.password === "123456") {
                     const user = { id: 'u123', name: "Usuário Teste", email: data.email };
@@ -51,11 +58,8 @@ const mockApi = {
         }, 1000);
     }),
 
-    /**
-     * @param {string} endpoint
-     * @returns {Promise<{data: any}>}
-     */
-    get: (endpoint) => new Promise((resolve, reject) => {
+    
+    get: (endpoint : string): Promise<{data:{user: User}}> => new Promise((resolve, reject) => {
         setTimeout(() => {
             if (endpoint === "/auth/profile") {
                 if (mockAuthData && mockAuthData.token) {
@@ -72,27 +76,15 @@ const mockApi = {
 
 // --- AUTH CONTEXT E PROVIDER (Baseado no snippet do usuário) ---
 
-/**
- * @typedef {object} AuthContextType
- * @property {User | null} user
- * @property {(email: string, password: string) => Promise<void>} login
- * @property {(name: string, cpf: string, email: string, password: string) => Promise<void>} register
- * @property {() => void} logout
- */
+interface AuthProviderProps {
+    children: React.ReactNode;
+}
 
-/** @type {React.Context<AuthContextType>} */
-export const AuthContext = createContext(null);
-
-/**
- * @param {{ children: React.ReactNode }} props
- */
-export const AuthProvider = ({ children }) => {
-    /** @type {[User | null, React.Dispatch<React.SetStateAction<User | null>>]} */
-    const [user, setUser] = useState(null);
-    /** @type {[string | null, React.Dispatch<React.SetStateAction<string | null>>]} */
-    const [token, setToken] = useState(null);
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [appUserId, setAppUserId] = useState(null); // Para o ID do ambiente Firebase
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+    const [user, setUser] = useState<User | null>(null);
+    const [token, setToken] = useState<string | null>(null);
+    const [isLoaded, setIsLoaded] = useState<Boolean>|(false);
+    const [appUserId, setAppUserId] = useState<string| null>(null); // Para o ID do ambiente Firebase
 
     // 1. Inicialização do ambiente (Obter ID do ambiente)
     useEffect(() => {
@@ -101,7 +93,7 @@ export const AuthProvider = ({ children }) => {
             return;
         }
 
-        const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (fbUser : FBUser | null) => {
             if (fbUser) {
                 setAppUserId(fbUser.uid);
             } else {
@@ -132,7 +124,7 @@ export const AuthProvider = ({ children }) => {
         setIsLoaded(true);
     }, []);
 
-    const loadProfile = async () => {
+    const loadProfile = async (): Promise<void>=> {
         try {
             const { data } = await mockApi.get("/auth/profile");
             setUser(data.user);
@@ -142,29 +134,17 @@ export const AuthProvider = ({ children }) => {
             logout();
         }
     };
-
-    /**
-     * @param {string} email
-     * @param {string} password
-     */
-    const login = async (email, password) => {
+    const login = async (email:string , password:string): Promise<void> => {
         const { data } = await mockApi.post("/auth/login", { email, password });
         // Simula o armazenamento do token e do usuário na memória
         setToken(data.token);
         setUser(data.user);
     };
-
-    /**
-     * @param {string} name
-     * @param {string} cpf
-     * @param {string} email
-     * @param {string} password
-     */
-    const register = async (name, cpf, email, password) => {
+    const register = async (name:string, cpf:string, email:string, password:string): Promise<void> => {
         await mockApi.post("/auth/register", { name, cpf, email, password });
     };
 
-    const logout = () => {
+    const logout = (): void => {
         // Simula a remoção do token e do usuário
         mockAuthData = null; // Limpa o mock "armazenamento"
         setToken(null);
@@ -172,7 +152,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Valor do Contexto
-    const contextValue = { user, login, register, logout };
+    const contextValue = { user,isLoaded, login, register, logout };
 
     return (
         <AuthContext.Provider value={contextValue}>
@@ -180,15 +160,41 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+export const useAuth = (): AuthContextType => {
+    const context = useContext(AuthContext);
 
-// --- COMPONENTES DE DEMONSTRAÇÃO DE UI ---
+    if (!context) {
+        throw new Error("useAuth deve ser usado dentro de um AuthProvider");
+    }
+    return context;
+}
+ interface InputProps {
+    id: string;
+    label: string;
+    type: string;
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    required?: boolean;
+} 
 
-/**
- * Componente para mostrar o estado de autenticação.
- */
-const AuthStatus = () => {
-    /** @type {AuthContextType} */
-    const { user, logout } = useContext(AuthContext);
+const Input: React.FC<InputProps> = ({ id, label, type, value, onChange, required }) => (
+    <div>
+        <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {label}
+        </label>
+        <input
+            id={id}
+            type={type}
+            value={value}
+            onChange={onChange}
+            required={required}
+            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+        />
+    </div>
+);
+
+const AuthStatus: React.FC = () => {
+    const { user, logout } = useAuth();
 
     return (
         <div className="flex flex-col items-center p-6 bg-blue-50 dark:bg-gray-800 border-2 border-dashed border-blue-200 dark:border-gray-700 rounded-xl shadow-inner w-full">
@@ -215,24 +221,22 @@ const AuthStatus = () => {
     );
 };
 
-/**
- * Formulário de Login.
- */
-const LoginForm = () => {
-    /** @type {AuthContextType} */
-    const { login, user } = useContext(AuthContext);
+//Formulário de Login.
+
+export const LoginForm: React.FC = () => {
+    const { login, user } = useAuth();
     const [email, setEmail] = useState("teste@exemplo.com");
     const [password, setPassword] = useState("123456");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string|null>(null);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
         try {
             await login(email, password);
-        } catch (err) {
+        } catch (err: any) {
             setError(err.message || "Erro desconhecido ao iniciar sessão.");
         } finally {
             setLoading(false);
@@ -279,9 +283,8 @@ const LoginForm = () => {
 /**
  * Formulário de Registo.
  */
-const RegisterForm = () => {
-    /** @type {AuthContextType} */
-    const { register, user } = useContext(AuthContext);
+export const RegisterForm: React.FC = () => {
+    const { register, user } = useAuth();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [cpf, setCpf] = useState("");
