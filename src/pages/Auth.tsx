@@ -353,16 +353,6 @@ const handleAuth = async (e: React.FormEvent, type: "login" | "signup") => {
   navigate("/dashboard");
 };
 
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email,
-    password,
-  });
-
-  console.log("DEBUG signUpData:", signUpData);
-  console.log("DEBUG signUpError:", signUpError);
-
-
-
   // --- JSX ---
   return (
     <div className="min-h-screen bg-background">
