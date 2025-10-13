@@ -16,28 +16,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { BottomNav } from "@/components/BottomNav";
 import { X1ChallengeDialog } from "@/components/X1ChallengeDialog";
-import { useAuth } from "@/context/AuthContext"; // Importa o hook de autenticação
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user, profile, loading, logout } = useAuth(); // Usa o hook de autenticação
-
-  const [invitesCount] = useState(3); // Mock count - idealmente viria de uma API ou do perfil do usuário
+  const [invitesCount] = useState(3); // Mock count
+  const [isAuthenticated] = useState(true); // Mock auth state
   const [x1ChallengeOpen, setX1ChallengeOpen] = useState(false);
+  
+  const mockUser = {
+    name: "João Silva",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=JoaoSilva",
+  };
 
-  // Redireciona para a página de autenticação se não estiver autenticado e o carregamento tiver terminado
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate("/auth");
-    }
-  }, [isAuthenticated, loading, navigate]);
-
-  const handleLogout = async () => {
-    await logout(); // Chama a função de logout do AuthContext
-    navigate("/auth"); // Redireciona para a página de autenticação após o logout
+  const handleLogout = () => {
+    console.log("Logout");
+    // TODO: Implement logout logic
   };
 
   const handleCreateTournament = () => {
@@ -47,17 +43,6 @@ const Dashboard = () => {
   const handleOpenX1Challenge = () => {
     setX1ChallengeOpen(true);
   };
-
-  // Se ainda estiver carregando, pode-se renderizar um spinner ou tela de carregamento
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  }
-
-  // Se não estiver autenticado (e não estiver mais carregando), o useEffect já redirecionou.
-  // Este return é um fallback, mas o usuário não deve chegar aqui.
-  if (!isAuthenticated) {
-    return null; 
-  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -71,7 +56,7 @@ const Dashboard = () => {
             <p className="text-muted-foreground">Gerencie seus torneios e participe de novos campeonatos</p>
           </div>
 
-          {isAuthenticated && profile && (
+          {isAuthenticated && (
             <div className="flex items-center gap-3">
               {/* Notifications */}
               <DropdownMenu>
@@ -92,10 +77,17 @@ const Dashboard = () => {
                   </div>
                   <DropdownMenuSeparator />
                   <div className="max-h-96 overflow-y-auto">
-                    {/* Exemplo de item de notificação interativo. Conteúdo deve vir de uma API. */}
-                    <DropdownMenuItem onClick={() => navigate("/invites")} className="flex flex-col items-start p-3 cursor-pointer">
-                      <p className="font-medium">Você tem {invitesCount} novos convites!</p>
-                      <p className="text-xs text-muted-foreground">Clique para ver</p>
+                    <DropdownMenuItem className="flex flex-col items-start p-3 cursor-pointer">
+                      <p className="font-medium">Convite para Campeonato FIFA</p>
+                      <p className="text-xs text-muted-foreground">Carlos Silva te convidou</p>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex flex-col items-start p-3 cursor-pointer">
+                      <p className="font-medium">Solicitação de Amizade</p>
+                      <p className="text-xs text-muted-foreground">Maria Santos quer ser sua amiga</p>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex flex-col items-start p-3 cursor-pointer">
+                      <p className="font-medium">Convite CS2 Tournament</p>
+                      <p className="text-xs text-muted-foreground">Pedro Costa te convidou</p>
                     </DropdownMenuItem>
                   </div>
                 </DropdownMenuContent>
@@ -106,10 +98,10 @@ const Dashboard = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 h-auto py-2 px-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.display_name || profile.full_name}`} alt={profile.display_name || profile.full_name || "Usuário"} />
-                      <AvatarFallback>{(profile.display_name || profile.full_name || "U").split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                      <AvatarImage src={mockUser.avatar} alt={mockUser.name} />
+                      <AvatarFallback>{mockUser.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                     </Avatar>
-                    <span className="hidden md:inline font-medium">{profile.display_name || profile.full_name}</span>
+                    <span className="hidden md:inline font-medium">{mockUser.name}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -174,7 +166,6 @@ const Dashboard = () => {
             </TabsContent>
           </Tabs>
         ) : (
-          // Se não estiver autenticado, o useEffect já redirecionou. Este bloco não deve ser alcançado.
           <PublicTournamentsTab />
         )}
       </main>
