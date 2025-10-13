@@ -9,125 +9,39 @@ import { Switch } from "@/components/ui/switch";
 import { Navbar } from "@/components/Navbar";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
 
 const CreateTournament = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth(); // Obter o usuário logado
-
   const [formData, setFormData] = useState({
-    title: "", // Corresponde a 'title' na tabela tournaments
-    description: "", // Usado para 'game' ou descrição do torneio
+    name: "",
+    game: "",
     gameMode: "",
     tournamentType: "",
     rounds: "1",
-    public: false, // Corresponde a 'public' na tabela tournaments
+    visibility: "private",
     crossPlay: false,
-    max_participants: "4", // Corresponde a 'max_participants' na tabela tournaments
-    entry_free: "", // Corresponde a 'entry_free' na tabela tournaments
+    maxPlayers: "4",
+    entryFee: "",
     adjudicationMethod: "host",
-    starts_at: "", // Nova data de início
-    ends_at: "", // Nova data de término
   });
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
-  };
-
-  const handleSelectChange = (id: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [id]: value }));
-  };
-
-  const handleSwitchChange = (id: string, checked: boolean) => {
-    setFormData((prev) => ({ ...prev, [id]: checked }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!user) {
-      toast({
-        title: "Erro de Autenticação",
-        description: "Você precisa estar logado para criar um campeonato.",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const newTournament = {
-        owner_id: user.id,
-        title: formData.title,
-        description: formData.description, // Usando description para o campo de jogo/descrição
-        entry_free: parseFloat(formData.entry_free),
-        max_participants: parseInt(formData.max_participants),
-        public: formData.public,
-        created_at: new Date().toISOString(),
-        starts_at: new Date(formData.starts_at).toISOString(),
-        ends_at: new Date(formData.ends_at).toISOString(),
-        status: "pending", // Status inicial
-        // Outros campos do formulário que não mapeiam diretamente para a tabela 'tournaments' podem ser armazenados em uma coluna JSONB se necessário, ou em tabelas relacionadas.
-      };
-
-      const { data, error } = await supabase
-        .from("tournaments")
-        .insert([newTournament])
-        .select();
-
-      if (error) throw error;
-
-      toast({
-        title: "Campeonato criado com sucesso!",
-        description: "Convite gerado. Compartilhe com os participantes.",
-      });
-
-      // Redirecionar para a página de detalhes do torneio recém-criado
-      if (data && data.length > 0) {
-        navigate(`/tournament/${data[0].id}`);
-      } else {
-        navigate("/dashboard");
-      }
-
-    } catch (err: any) {
-      console.error("Erro ao criar campeonato:", err.message);
-      toast({
-        title: "Erro ao criar campeonato",
-        description: err.message || "Ocorreu um erro inesperado.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculatePrizePool = () => {
-    const entryFee = parseFloat(formData.entry_free);
-    const maxPlayers = parseInt(formData.max_participants);
-    if (isNaN(entryFee) || isNaN(maxPlayers) || entryFee <= 0 || maxPlayers <= 0) {
-      return "0.00";
-    }
-    // Assumindo 5% de taxa da plataforma
-    return (entryFee * maxPlayers * 0.95).toFixed(2);
-  };
-
-  const calculatePlatformFee = () => {
-    const entryFee = parseFloat(formData.entry_free);
-    const maxPlayers = parseInt(formData.max_participants);
-    if (isNaN(entryFee) || isNaN(maxPlayers) || entryFee <= 0 || maxPlayers <= 0) {
-      return "0.00";
-    }
-    return (entryFee * maxPlayers * 0.05).toFixed(2);
+    
+    toast({
+      title: "Campeonato criado!",
+      description: "Convite gerado. Compartilhe com os participantes.",
+    });
+    
+    setTimeout(() => {
+      navigate("/dashboard");
+    }, 1500);
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar isAuthenticated={!!user} /> {/* Passa isAuthenticated baseado no user */}
+      <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
         <Button
@@ -155,56 +69,56 @@ const CreateTournament = () => {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Nome do Campeonato</Label>
+                  <Label htmlFor="name">Nome do Campeonato</Label>
                   <Input
-                    id="title"
+                    id="name"
                     placeholder="Ex: Campeonato EA FC 25"
-                    value={formData.title}
-                    onChange={handleChange}
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Jogo / Descrição Breve</Label>
-                  <Input
-                    id="description"
-                    placeholder="Ex: EA FC 25 - Ultimate Team"
-                    value={formData.description}
-                    onChange={handleChange}
-                    required
-                  />
+                  <Label htmlFor="game">Jogo</Label>
+                  <Select
+                    value={formData.game}
+                    onValueChange={(value) => setFormData({ ...formData, game: value, gameMode: "" })}
+                  >
+                    <SelectTrigger id="game">
+                      <SelectValue placeholder="Selecione o jogo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ea-fc">EA FC</SelectItem>
+                      <SelectItem value="outros">Outros</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Campos para data de início e término */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {formData.game === "ea-fc" && (
                   <div className="space-y-2">
-                    <Label htmlFor="starts_at">Data de Início</Label>
-                    <Input
-                      id="starts_at"
-                      type="datetime-local"
-                      value={formData.starts_at}
-                      onChange={handleChange}
-                      required
-                    />
+                    <Label htmlFor="gameMode">Modo</Label>
+                    <Select
+                      value={formData.gameMode}
+                      onValueChange={(value) => setFormData({ ...formData, gameMode: value })}
+                    >
+                      <SelectTrigger id="gameMode">
+                        <SelectValue placeholder="Selecione o modo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ultimate-team">Ultimate Team</SelectItem>
+                        <SelectItem value="pro-clubs">Pro Clubs</SelectItem>
+                        <SelectItem value="torneio-equipes">Torneio entre Equipes</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ends_at">Data de Término</Label>
-                    <Input
-                      id="ends_at"
-                      type="datetime-local"
-                      value={formData.ends_at}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="tournamentType">Tipo de Campeonato</Label>
                   <Select
                     value={formData.tournamentType}
-                    onValueChange={(value) => handleSelectChange("tournamentType", value)}
+                    onValueChange={(value) => setFormData({ ...formData, tournamentType: value })}
                   >
                     <SelectTrigger id="tournamentType">
                       <SelectValue placeholder="Selecione o tipo" />
@@ -222,7 +136,7 @@ const CreateTournament = () => {
                     <Label htmlFor="rounds">Número de Voltas</Label>
                     <Select
                       value={formData.rounds}
-                      onValueChange={(value) => handleSelectChange("rounds", value)}
+                      onValueChange={(value) => setFormData({ ...formData, rounds: value })}
                     >
                       <SelectTrigger id="rounds">
                         <SelectValue />
@@ -235,12 +149,12 @@ const CreateTournament = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="public">Visibilidade</Label>
+                    <Label htmlFor="visibility">Visibilidade</Label>
                     <Select
-                      value={formData.public ? "public" : "private"}
-                      onValueChange={(value) => handleSwitchChange("public", value === "public")}
+                      value={formData.visibility}
+                      onValueChange={(value) => setFormData({ ...formData, visibility: value })}
                     >
-                      <SelectTrigger id="public">
+                      <SelectTrigger id="visibility">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -255,7 +169,7 @@ const CreateTournament = () => {
                   <Switch
                     id="crossPlay"
                     checked={formData.crossPlay}
-                    onCheckedChange={(checked) => handleSwitchChange("crossPlay", checked)}
+                    onCheckedChange={(checked) => setFormData({ ...formData, crossPlay: checked })}
                   />
                   <Label htmlFor="crossPlay" className="cursor-pointer">
                     Cross-play habilitado
@@ -264,12 +178,12 @@ const CreateTournament = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="max_participants">Número de Jogadores</Label>
+                    <Label htmlFor="maxPlayers">Número de Jogadores</Label>
                     <Select
-                      value={formData.max_participants}
-                      onValueChange={(value) => handleSelectChange("max_participants", value)}
+                      value={formData.maxPlayers}
+                      onValueChange={(value) => setFormData({ ...formData, maxPlayers: value })}
                     >
-                      <SelectTrigger id="max_participants">
+                      <SelectTrigger id="maxPlayers">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -282,16 +196,14 @@ const CreateTournament = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="entry_free">Valor por Jogador (R$)</Label>
+                    <Label htmlFor="entryFee">Valor por Jogador (R$)</Label>
                     <Input
-                      id="entry_free"
+                      id="entryFee"
                       type="number"
                       placeholder="50.00"
-                      value={formData.entry_free}
-                      onChange={handleChange}
+                      value={formData.entryFee}
+                      onChange={(e) => setFormData({ ...formData, entryFee: e.target.value })}
                       required
-                      min="0"
-                      step="0.01"
                     />
                   </div>
                 </div>
@@ -300,7 +212,7 @@ const CreateTournament = () => {
                   <Label htmlFor="adjudicationMethod">Método de Decisão</Label>
                   <Select
                     value={formData.adjudicationMethod}
-                    onValueChange={(value) => handleSelectChange("adjudicationMethod", value)}
+                    onValueChange={(value) => setFormData({ ...formData, adjudicationMethod: value })}
                   >
                     <SelectTrigger id="adjudicationMethod">
                       <SelectValue />
@@ -325,16 +237,16 @@ const CreateTournament = () => {
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-muted-foreground">Premiação Total</span>
                       <span className="text-2xl font-bold text-primary">
-                        R$ {calculatePrizePool()}
+                        R$ {(Number(formData.entryFee) * Number(formData.maxPlayers) * 0.95).toFixed(2)}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Taxa da plataforma: 5% (R$ {calculatePlatformFee()})
+                      Taxa da plataforma: 5% (R$ {(Number(formData.entryFee) * Number(formData.maxPlayers) * 0.05).toFixed(2)})
                     </p>
                   </div>
 
-                  <Button type="submit" size="lg" className="w-full gradient-primary" disabled={loading}>
-                    {loading ? "Criando..." : "Criar e Gerar Convite"}
+                  <Button type="submit" size="lg" className="w-full gradient-primary">
+                    Criar e Gerar Convite
                   </Button>
                 </div>
               </form>
