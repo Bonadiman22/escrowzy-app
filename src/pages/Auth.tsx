@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
-import { apiClient } from "../pages/apiClient.ts"; 
+import { api } from "../pages/apiClient.ts"; 
 // já tem imports atuais...
 import { supabase } from "@/integrations/supabase/client"; 
 // ajuste o caminho se necessário (o caminho que você mostrou é esse)
