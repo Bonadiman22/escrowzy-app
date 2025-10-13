@@ -15,6 +15,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "../pages/apiClient.ts"; 
+// já tem imports atuais...
+import { supabase } from "@/integrations/supabase/client"; 
+// ajuste o caminho se necessário (o caminho que você mostrou é esse)
+
 
 /*
   Melhorias realizadas:
@@ -194,48 +198,161 @@ const Auth = () => {
     return errors.length === 0;
   };
 
-  // --- Submissão (login/signup) ---
-  const handleAuth = async (e: React.FormEvent, type: "login" | "signup") => {
-    e.preventDefault();
+    /** SIGNUP + INSERT PROFILE
+ *  - cria usuário no Supabase Auth
+ *  - grava profile na tabela 'profiles' com id = auth.uid()
+ *  - retorna { success: boolean, error?: any, user?: any, profile?: any }
+ */
+const signUpAndCreateProfile = async (payload: {
+  name: string;
+  email: string;
+  password: string;
+  cpf: string;   // formatado (000.000.000-00) ou raw
+  phone: string; // formatado ou raw
+}) => {
+  const { name, email, password, cpf, phone } = payload;
 
-    if (type === "signup") {
-      const ok = validateAllSignup();
-      if (!ok) {
-        toast({
-          title: "Corrija os campos",
-          description: "Por favor verifique os campos destacados antes de continuar.",
-        });
-        return;
-      }
-    } else {
-      // Login: validações simples (email e senha)
-      const loginEmail = (document.getElementById("login-email") as HTMLInputElement | null)?.value ?? "";
-      const loginPassword = (document.getElementById("login-password") as HTMLInputElement | null)?.value ?? "";
-      if (!loginEmail || !loginPassword) {
-        toast({
-          title: "Preencha email e senha",
-          description: "É necessário informar email e senha para entrar.",
-        });
-        // foca campo vazio
-        if (!loginEmail) (document.getElementById("login-email") as HTMLInputElement | null)?.focus();
-        else (document.getElementById("login-password") as HTMLInputElement | null)?.focus();
-        return;
-      }
+  // garante que gravamos apenas dígitos no banco
+  const onlyDigits = (v: string) => v.replace(/\D/g, "");
+
+  // 1) criar usuário no Supabase Auth
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
+  if (signUpError) {
+    // Erros típicos: email already registered, senha fraca, etc.
+    return { success: false, error: signUpError };
+  }
+
+  const userId = signUpData.user?.id;
+  if (!userId) {
+    // raramente não vem id — tratamos como erro
+    return { success: false, error: new Error("User id not returned from signup") };
+  }
+
+  // 2) inserir profile na tabela 'profiles'
+  // Use UPSERT para evitar erro caso já exista (por exemplo em testes)
+  const payloadProfile = {
+    id: userId,                // chave primária id = auth.uid()
+    full_name: name,
+    email,
+    cpf: onlyDigits(cpf),
+    phone: onlyDigits(phone),
+    created_at: new Date().toISOString(),
+  };
+
+  // upsert protege contra duplicate key e atualiza se já existir
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .upsert(payloadProfile, { onConflict: ["id"], ignoreDuplicates: false })
+    .select()
+    .single();
+
+  if (profileError) {
+    // Possível causa: RLS bloqueando ou mismatch de colunas
+    return { success: false, error: profileError };
+  }
+
+  return { success: true, user: signUpData.user, profile: profileData };
+};
+
+  // --- Submissão (login/signup) ---
+const handleAuth = async (e: React.FormEvent, type: "login" | "signup") => {
+  e.preventDefault();
+
+  // Se for signup: valida todos os campos (já implementada por você)
+  if (type === "signup") {
+    const ok = validateAllSignup();
+    if (!ok) {
+      toast({
+        title: "Corrija os campos",
+        description: "Por favor verifique os campos destacados antes de continuar.",
+      });
+      return;
     }
 
+    // bloqueia UI
     setIsLoading(true);
 
-    // Simulação de requisição (substituir por chamada real ao Supabase)
-    setTimeout(() => {
+    // chama o helper que integra com Supabase
+    const result = await signUpAndCreateProfile({
+      name,      // assume que `name` é state do componente
+      email,     // assume que `email` é state do componente
+      password,  // assume que `password` é state do componente
+      cpf,       // assume que `cpf` é state do componente (formatado)
+      phone,     // assume que `phone` é state do componente (formatado)
+    });
+
+    setIsLoading(false);
+
+    if (!result.success) {
+      // Mostra mensagem amigável ao usuário
+      const message = result.error?.message ?? "Erro ao criar conta. Tente novamente.";
       toast({
-        title: type === "login" ? "Login realizado!" : "Conta criada!",
-        description:
-          type === "login" ? "Bem-vindo de volta" : "Sua conta foi criada com sucesso",
+        title: "Erro ao criar conta",
+        description: message,
       });
-      setIsLoading(false);
-      navigate("/dashboard");
-    }, 1200);
-  };
+
+      // Log para debug (no console dev)
+      console.error("signUpAndCreateProfile error:", result.error);
+      return;
+    }
+
+    // Sucesso: sessão criada (supabase SDK geralmente já cria sessão)
+    toast({
+      title: "Conta criada!",
+      description: "Bem-vindo(a)! Você será redirecionado ao dashboard.",
+    });
+
+    // Navega para dashboard
+    navigate("/dashboard");
+    return;
+  }
+
+  // --- caso LOGIN ---
+  // validações simples (email e senha) usando inputs não controlados
+  const loginEmail = (document.getElementById("login-email") as HTMLInputElement | null)?.value ?? "";
+  const loginPassword = (document.getElementById("login-password") as HTMLInputElement | null)?.value ?? "";
+
+  if (!loginEmail || !loginPassword) {
+    toast({
+      title: "Preencha email e senha",
+      description: "É necessário informar email e senha para entrar.",
+    });
+    // foca campo vazio
+    if (!loginEmail) (document.getElementById("login-email") as HTMLInputElement | null)?.focus();
+    else (document.getElementById("login-password") as HTMLInputElement | null)?.focus();
+    return;
+  }
+
+  // Efetua login via Supabase
+  setIsLoading(true);
+  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    email: loginEmail,
+    password: loginPassword,
+  });
+  setIsLoading(false);
+
+  if (signInError) {
+    // Pode ser: Invalid login, user not confirmed, etc.
+    toast({
+      title: "Falha no login",
+      description: signInError.message || "Erro ao tentar entrar. Verifique credenciais.",
+    });
+    console.error("login error:", signInError);
+    return;
+  }
+
+  // Se chegou aqui, login ok
+  toast({
+    title: "Login realizado!",
+    description: "Bem-vindo de volta.",
+  });
+  navigate("/dashboard");
+};
+
 
   // --- JSX ---
   return (
