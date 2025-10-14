@@ -28,16 +28,14 @@ interface Tournament {
   starts_at: string;
   ends_at: string;
   status: string;
-  // Adicione outros campos que você possa ter no Supabase, como game, game_mode, tournament_type, etc.
-  // Estes campos não foram fornecidos no esquema da tabela 'tournaments', mas são usados no frontend.
-  // Vou assumir que eles existem ou precisam ser mapeados.
+  
   game: string;
   game_mode: string;
   tournament_type: string;
   rounds: number;
   prize_pool: number; // Assumindo que prize_pool é calculado ou armazenado
   invite_link: string; // Assumindo que invite_link é gerado ou armazenado
-  adjudication_method: string; // Assumindo que adjudication_method é armazenado
+  adjudication_method: string; 
   participants: Participant[]; // Para incluir participantes ao buscar detalhes do torneio
 }
 
@@ -53,7 +51,7 @@ interface Participant {
     email: string;
     full_name: string;
     display_name: string;
-    avatar_url?: string; // Adicionado para avatar, se existir na tabela profiles
+    avatar_url?: string; // Adicionado para avatar
   } | null;
 }
 
@@ -73,10 +71,9 @@ export const createTournament = async (formData: TournamentFormData) => {
       max_participants: parseInt(formData.maxPlayers),
       public: formData.visibility === "public", // Mapeando visibility para public
       created_at: new Date().toISOString(),
-      starts_at: formData.startsAt, // Assumindo que o form terá esses campos
-      ends_at: formData.endsAt, // Assumindo que o form terá esses campos
+      starts_at: formData.startsAt, 
+      ends_at: formData.endsAt, 
       status: "pending", // Status inicial
-      // Campos adicionais do frontend que não estão no esquema fornecido, mas são importantes:
       game: formData.game,
       game_mode: formData.gameMode,
       tournament_type: formData.tournamentType,
@@ -112,7 +109,7 @@ export const getTournamentDetails = async (tournamentId: string): Promise<Tourna
           email,
           full_name,
           display_name,
-          avatar_url // CRIAR um avatar_url na tabela profiles
+          avatar_url // Assumindo que você pode ter um avatar_url na tabela profiles
         )
       )
     `)
@@ -187,7 +184,7 @@ export const joinTournament = async (tournamentId: string, userId: string, gamer
     .insert({
       tournament_id: tournamentId,
       user_id: userId,
-      gamertag: gamertag, // Assumindo que gamertag é uma coluna na tabela participants
+      gamertag: gamertag, // Criar essa coluna gamertag
       status: entryFee > 0 ? "pending" : "paid", // Mapeando payment_status para status
       joined_at: new Date().toISOString(),
     })
