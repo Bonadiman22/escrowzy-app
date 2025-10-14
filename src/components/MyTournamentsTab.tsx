@@ -3,8 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Trophy, Users, Calendar, DollarSign } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Tournament {
   id: string;
@@ -15,72 +17,77 @@ interface Tournament {
   prizePool: number;
   entryFee: number;
   status: "pending" | "active" | "completed";
-  paymentStatus: "paid" | "pending";
   createdAt: string;
   currentStage?: string;
   progress?: number;
 }
 
-const mockTournaments: Tournament[] = [
-  {
-    id: "1",
-    name: "Campeonato EA FC 25",
-    game: "EA FC 25",
-    players: 3,
-    maxPlayers: 4,
-    prizePool: 200,
-    entryFee: 50,
-    status: "pending",
-    paymentStatus: "paid",
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "2",
-    name: "Torneio CS2 Finals",
-    game: "Counter-Strike 2",
-    players: 8,
-    maxPlayers: 8,
-    prizePool: 400,
-    entryFee: 50,
-    status: "active",
-    paymentStatus: "paid",
-    createdAt: "2024-01-14",
-    currentStage: "Quartas de Final",
-    progress: 50,
-  },
-  {
-    id: "3",
-    name: "Liga Rocket League",
-    game: "Rocket League",
-    players: 6,
-    maxPlayers: 8,
-    prizePool: 320,
-    entryFee: 40,
-    status: "active",
-    paymentStatus: "pending",
-    createdAt: "2024-01-10",
-    currentStage: "Semifinal",
-    progress: 75,
-  },
-  {
-    id: "4",
-    name: "Valorant Masters",
-    game: "Valorant",
-    players: 16,
-    maxPlayers: 16,
-    prizePool: 800,
-    entryFee: 50,
-    status: "completed",
-    paymentStatus: "paid",
-    createdAt: "2024-01-05",
-    progress: 100,
-  },
-];
-
-type FilterType = "all" | "active" | "completed" | "paid" | "pending";
+type FilterType = "all" | "active" | "completed";
 
 export const MyTournamentsTab = () => {
   const [filter, setFilter] = useState<FilterType>("all");
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchMyTournaments();
+  }, []);
+
+  const fetchMyTournaments = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setTournaments([]);
+        return;
+      }
+
+      // Buscar campeonatos criados pelo usuário
+      const { data: ownerTournaments, error: ownerError } = await supabase
+        .from("tournaments" as any)
+        .select(`
+          id,
+          title,
+          game,
+          max_participants,
+          prize_pool,
+          entry_fee,
+          status,
+          created_at,
+          participants (id)
+        `)
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (ownerError) throw ownerError;
+
+      // Transformar dados do Supabase para o formato do componente
+      const formattedTournaments: Tournament[] = (ownerTournaments || []).map((tournament: any) => ({
+        id: tournament.id,
+        name: tournament.title,
+        game: tournament.game,
+        players: tournament.participants?.length || 0,
+        maxPlayers: tournament.max_participants,
+        prizePool: tournament.prize_pool || 0,
+        entryFee: tournament.entry_fee || 0,
+        status: tournament.status as "pending" | "active" | "completed",
+        createdAt: tournament.created_at,
+      }));
+
+      setTournaments(formattedTournaments);
+    } catch (error) {
+      console.error("Erro ao buscar campeonatos:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar seus campeonatos.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: Tournament["status"]) => {
     const variants = {
@@ -91,22 +98,20 @@ export const MyTournamentsTab = () => {
     return <Badge className={variants[status].className}>{variants[status].label}</Badge>;
   };
 
-  const getPaymentBadge = (paymentStatus: Tournament["paymentStatus"]) => {
-    return paymentStatus === "paid" ? (
-      <Badge className="bg-success/10 text-success border-success/20">Pago</Badge>
-    ) : (
-      <Badge className="bg-warning/10 text-warning border-warning/20">Pagamento Pendente</Badge>
-    );
-  };
-
-  const filteredTournaments = mockTournaments.filter((tournament) => {
+  const filteredTournaments = tournaments.filter((tournament) => {
     if (filter === "all") return true;
     if (filter === "active") return tournament.status === "active";
     if (filter === "completed") return tournament.status === "completed";
-    if (filter === "paid") return tournament.paymentStatus === "paid";
-    if (filter === "pending") return tournament.paymentStatus === "pending";
     return true;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">Carregando campeonatos...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -120,8 +125,6 @@ export const MyTournamentsTab = () => {
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="active">Em Andamento</SelectItem>
             <SelectItem value="completed">Finalizados</SelectItem>
-            <SelectItem value="paid">Pagos</SelectItem>
-            <SelectItem value="pending">Pendentes</SelectItem>
           </SelectContent>
         </Select>
         <p className="text-sm text-muted-foreground">
@@ -145,7 +148,6 @@ export const MyTournamentsTab = () => {
                   </div>
                   <div className="flex flex-col gap-2">
                     {getStatusBadge(tournament.status)}
-                    {getPaymentBadge(tournament.paymentStatus)}
                   </div>
                 </div>
               </CardHeader>
@@ -201,7 +203,11 @@ export const MyTournamentsTab = () => {
 
         {filteredTournaments.length === 0 && (
           <Card className="glass-card p-8 text-center">
-            <p className="text-muted-foreground">Nenhum campeonato encontrado com os filtros selecionados.</p>
+            <p className="text-muted-foreground">
+              {tournaments.length === 0 
+                ? "Você ainda não criou nenhum campeonato. Clique em 'Criar Campeonato' para começar!" 
+                : "Nenhum campeonato encontrado com os filtros selecionados."}
+            </p>
           </Card>
         )}
       </div>
