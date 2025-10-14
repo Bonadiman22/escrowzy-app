@@ -13,7 +13,6 @@ interface TournamentFormData {
   adjudicationMethod: string;
   description: string;
   startsAt: string;
-  endsAt: string;
 }
 
 interface Tournament {
@@ -73,8 +72,7 @@ export const createTournament = async (formData: TournamentFormData) => {
       max_participants: parseInt(formData.maxPlayers),
       public: formData.visibility === "public", // Mapeando visibility para public
       created_at: new Date().toISOString(),
-      starts_at: formData.startsAt, // Assumindo que o form terá esses campos
-      ends_at: formData.endsAt, // Assumindo que o form terá esses campos
+      starts_at: formData.startsAt,
       status: "pending", // Status inicial
       // Campos adicionais do frontend que não estão no esquema fornecido, mas são importantes:
       game: formData.game,

@@ -27,8 +27,6 @@ const CreateTournament = () => {
     adjudicationMethod: "host",
     description: "",
     startsAt: "",
-    endsAt: "",
-
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,27 +106,15 @@ const CreateTournament = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="startsAt">Data e Hora de Início</Label>
-                    <Input
-                      id="startsAt"
-                      type="datetime-local"
-                      value={formData.startsAt}
-                      onChange={(e) => setFormData({ ...formData, startsAt: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="endsAt">Data e Hora de Término</Label>
-                    <Input
-                      id="endsAt"
-                      type="datetime-local"
-                      value={formData.endsAt}
-                      onChange={(e) => setFormData({ ...formData, endsAt: e.target.value })}
-                      required
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="startsAt">Data e Hora de Início</Label>
+                  <Input
+                    id="startsAt"
+                    type="datetime-local"
+                    value={formData.startsAt}
+                    onChange={(e) => setFormData({ ...formData, startsAt: e.target.value })}
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
