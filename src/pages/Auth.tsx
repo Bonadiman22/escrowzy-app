@@ -216,7 +216,7 @@ const signUpAndCreateProfile = async (payload: {
   const onlyDigits = (v: string) => v.replace(/\D/g, "");
 
   // 1) criar usuário no Supabase Auth
-  const { data: signUpData, error: signUpError } = await supabase_auth.signUp({
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
   });
