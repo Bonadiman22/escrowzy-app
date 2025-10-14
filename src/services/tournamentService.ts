@@ -45,14 +45,13 @@ interface Participant {
   tournament_id: string;
   user_id: string;
   joined_at: string;
-  status: "pending" | "paid" | "forfeit"; // Mapeando para o status fornecido
+  status: "pending" | "paid" | "forfeit";
   profiles: {
     id: string;
-    auth_uid: string;
     email: string;
     full_name: string;
     display_name: string;
-    avatar_url?: string; // Adicionado para avatar, se existir na tabela profiles
+    avatar_url?: string;
   } | null;
 }
 
@@ -106,7 +105,6 @@ export const getTournamentDetails = async (tournamentId: string): Promise<Tourna
         status,
         profiles(
           id,
-          auth_uid,
           email,
           full_name,
           display_name,
@@ -121,7 +119,7 @@ export const getTournamentDetails = async (tournamentId: string): Promise<Tourna
     console.error("Erro ao buscar detalhes do torneio:", error);
     return null;
   }
-  return data as Tournament;
+  return data as unknown as Tournament;
 };
 
 export const getTournamentParticipants = async (tournamentId: string): Promise<Participant[]> => {
@@ -135,7 +133,6 @@ export const getTournamentParticipants = async (tournamentId: string): Promise<P
       status,
       profiles(
         id,
-        auth_uid,
         email,
         full_name,
         display_name,
@@ -148,7 +145,7 @@ export const getTournamentParticipants = async (tournamentId: string): Promise<P
     console.error("Erro ao buscar participantes do torneio:", error);
     return [];
   }
-  return data as Participant[];
+  return data as unknown as Participant[];
 };
 
 export const updateTournament = async (tournamentId: string, updates: Partial<Tournament>) => {

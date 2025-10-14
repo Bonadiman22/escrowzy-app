@@ -40,7 +40,6 @@ interface Participant {
   status: "pending" | "paid" | "forfeit";
   profiles: {
     id: string;
-    auth_uid: string;
     email: string;
     full_name: string;
     display_name: string;

@@ -47,11 +47,17 @@ export type Database = {
             referencedRelation: "tournaments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
         Row: {
-          auth_uid: string | null
           avatar_url: string | null
           cpf: string | null
           created_at: string
@@ -63,19 +69,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          auth_uid?: string | null
           avatar_url?: string | null
           cpf?: string | null
           created_at?: string
           display_name?: string | null
           email: string
           full_name: string
-          id?: string
+          id: string
           phone?: string | null
           updated_at?: string
         }
         Update: {
-          auth_uid?: string | null
           avatar_url?: string | null
           cpf?: string | null
           created_at?: string
