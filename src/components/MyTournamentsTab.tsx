@@ -4,23 +4,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Trophy, Users, Calendar, DollarSign, Loader2 } from "lucide-react";
+import { Trophy, Users, Calendar, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface Tournament {
   id: string;
-  title: string;
+  name: string;
   game: string;
-  participants_count: number;
-  max_participants: number;
-  prize_pool: number;
-  entry_fee: number;
-  status: string;
-  created_at: string;
+  players: number;
+  maxPlayers: number;
+  prizePool: number;
+  entryFee: number;
+  status: "pending" | "active" | "completed";
+  createdAt: string;
+  currentStage?: string;
+  progress?: number;
 }
 
-type FilterType = "all" | "active" | "pending" | "completed";
+type FilterType = "all" | "active" | "completed";
 
 export const MyTournamentsTab = () => {
   const [filter, setFilter] = useState<FilterType>("all");
@@ -29,10 +31,10 @@ export const MyTournamentsTab = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchTournaments();
+    fetchMyTournaments();
   }, []);
 
-  const fetchTournaments = async () => {
+  const fetchMyTournaments = async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -42,28 +44,44 @@ export const MyTournamentsTab = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("tournaments")
+      // Buscar campeonatos criados pelo usuário
+      const { data: ownerTournaments, error: ownerError } = await supabase
+        .from("tournaments" as any)
         .select(`
-          *,
-          participants(count)
+          id,
+          title,
+          game,
+          max_participants,
+          prize_pool,
+          entry_fee,
+          status,
+          created_at,
+          participants (id)
         `)
         .eq("owner_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (ownerError) throw ownerError;
 
-      const tournamentsWithCount = (data || []).map((tournament: any) => ({
-        ...tournament,
-        participants_count: tournament.participants?.[0]?.count || 0,
+      // Transformar dados do Supabase para o formato do componente
+      const formattedTournaments: Tournament[] = (ownerTournaments || []).map((tournament: any) => ({
+        id: tournament.id,
+        name: tournament.title,
+        game: tournament.game,
+        players: tournament.participants?.length || 0,
+        maxPlayers: tournament.max_participants,
+        prizePool: tournament.prize_pool || 0,
+        entryFee: tournament.entry_fee || 0,
+        status: tournament.status as "pending" | "active" | "completed",
+        createdAt: tournament.created_at,
       }));
 
-      setTournaments(tournamentsWithCount);
+      setTournaments(formattedTournaments);
     } catch (error) {
-      console.error("Erro ao buscar torneios:", error);
+      console.error("Erro ao buscar campeonatos:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar seus torneios.",
+        description: "Não foi possível carregar seus campeonatos.",
         variant: "destructive",
       });
     } finally {
@@ -71,25 +89,26 @@ export const MyTournamentsTab = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, { label: string; className: string }> = {
+  const getStatusBadge = (status: Tournament["status"]) => {
+    const variants = {
       pending: { label: "Aguardando", className: "bg-warning/10 text-warning border-warning/20" },
       active: { label: "Em Andamento", className: "bg-success/10 text-success border-success/20" },
       completed: { label: "Finalizado", className: "bg-muted/10 text-muted-foreground border-muted/20" },
     };
-    const variant = variants[status] || variants.pending;
-    return <Badge className={variant.className}>{variant.label}</Badge>;
+    return <Badge className={variants[status].className}>{variants[status].label}</Badge>;
   };
 
   const filteredTournaments = tournaments.filter((tournament) => {
     if (filter === "all") return true;
-    return tournament.status === filter;
+    if (filter === "active") return tournament.status === "active";
+    if (filter === "completed") return tournament.status === "completed";
+    return true;
   });
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Carregando campeonatos...</p>
       </div>
     );
   }
@@ -104,7 +123,6 @@ export const MyTournamentsTab = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="pending">Aguardando</SelectItem>
             <SelectItem value="active">Em Andamento</SelectItem>
             <SelectItem value="completed">Finalizados</SelectItem>
           </SelectContent>
@@ -122,7 +140,7 @@ export const MyTournamentsTab = () => {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-xl mb-1">{tournament.title}</CardTitle>
+                    <CardTitle className="text-xl mb-1">{tournament.name}</CardTitle>
                     <CardDescription className="flex items-center gap-2">
                       <Trophy className="w-4 h-4" />
                       {tournament.game}
@@ -141,7 +159,7 @@ export const MyTournamentsTab = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">Participantes</p>
                       <p className="font-semibold">
-                        {tournament.participants_count}/{tournament.max_participants}
+                        {tournament.players}/{tournament.maxPlayers}
                       </p>
                     </div>
                   </div>
@@ -149,24 +167,35 @@ export const MyTournamentsTab = () => {
                     <DollarSign className="w-4 h-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">Taxa de Entrada</p>
-                      <p className="font-semibold text-primary">R$ {tournament.entry_fee}</p>
+                      <p className="font-semibold text-primary">R$ {tournament.entryFee}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Trophy className="w-4 h-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">Premiação Total</p>
-                      <p className="font-semibold text-primary">R$ {tournament.prize_pool || 0}</p>
+                      <p className="font-semibold text-primary">R$ {tournament.prizePool}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">Criado em</p>
-                      <p className="font-semibold">{new Date(tournament.created_at).toLocaleDateString()}</p>
+                      <p className="font-semibold">{new Date(tournament.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </div>
+
+                {/* Progress Bar for Active Tournaments */}
+                {tournament.status === "active" && tournament.currentStage && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Progresso do Campeonato</span>
+                      <span className="font-semibold">{tournament.currentStage}</span>
+                    </div>
+                    <Progress value={tournament.progress} className="h-2" />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </Link>
@@ -174,7 +203,11 @@ export const MyTournamentsTab = () => {
 
         {filteredTournaments.length === 0 && (
           <Card className="glass-card p-8 text-center">
-            <p className="text-muted-foreground">Nenhum campeonato encontrado com os filtros selecionados.</p>
+            <p className="text-muted-foreground">
+              {tournaments.length === 0 
+                ? "Você ainda não criou nenhum campeonato. Clique em 'Criar Campeonato' para começar!" 
+                : "Nenhum campeonato encontrado com os filtros selecionados."}
+            </p>
           </Card>
         )}
       </div>
