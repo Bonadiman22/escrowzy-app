@@ -27,7 +27,7 @@ const CreateTournament = () => {
     adjudicationMethod: "host",
     description: "",
     startsAt: "",
-  
+    endsAt: "",
 
   });
 
@@ -116,6 +116,16 @@ const CreateTournament = () => {
                       type="datetime-local"
                       value={formData.startsAt}
                       onChange={(e) => setFormData({ ...formData, startsAt: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="endsAt">Data e Hora de Término</Label>
+                    <Input
+                      id="endsAt"
+                      type="datetime-local"
+                      value={formData.endsAt}
+                      onChange={(e) => setFormData({ ...formData, endsAt: e.target.value })}
                       required
                     />
                   </div>
