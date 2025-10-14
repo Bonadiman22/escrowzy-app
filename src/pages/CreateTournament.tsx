@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createTournament } from "@/services/tournamentService";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,9 +25,13 @@ const CreateTournament = () => {
     maxPlayers: "4",
     entryFee: "",
     adjudicationMethod: "host",
+    description: "",
+    startsAt: "",
+    endsAt: "",
+
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     toast({
@@ -34,9 +39,23 @@ const CreateTournament = () => {
       description: "Convite gerado. Compartilhe com os participantes.",
     });
     
-    setTimeout(() => {
-      navigate("/dashboard");
-    }, 1500);
+    try {
+      await createTournament(formData);
+      toast({
+        title: "Campeonato criado com sucesso!",
+        description: "Convite gerado. Compartilhe com os participantes.",
+      });
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1500);
+    } catch (error: any) {
+      console.error("Erro ao criar torneio:", error);
+      toast({
+        title: "Erro ao criar campeonato",
+        description: error.message || "Ocorreu um erro ao tentar criar o campeonato. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -77,6 +96,39 @@ const CreateTournament = () => {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descrição</Label>
+                  <Input
+                    id="description"
+                    placeholder="Breve descrição do campeonato"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="startsAt">Data e Hora de Início</Label>
+                    <Input
+                      id="startsAt"
+                      type="datetime-local"
+                      value={formData.startsAt}
+                      onChange={(e) => setFormData({ ...formData, startsAt: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="endsAt">Data e Hora de Término</Label>
+                    <Input
+                      id="endsAt"
+                      type="datetime-local"
+                      value={formData.endsAt}
+                      onChange={(e) => setFormData({ ...formData, endsAt: e.target.value })}
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
