@@ -14,7 +14,143 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      participants: {
+        Row: {
+          gamertag: string | null
+          id: string
+          joined_at: string
+          status: string
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          gamertag?: string | null
+          id?: string
+          joined_at?: string
+          status?: string
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          gamertag?: string | null
+          id?: string
+          joined_at?: string
+          status?: string
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participants_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          auth_uid: string | null
+          avatar_url: string | null
+          cpf: string | null
+          created_at: string
+          display_name: string | null
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          auth_uid?: string | null
+          avatar_url?: string | null
+          cpf?: string | null
+          created_at?: string
+          display_name?: string | null
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auth_uid?: string | null
+          avatar_url?: string | null
+          cpf?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tournaments: {
+        Row: {
+          adjudication_method: string
+          created_at: string
+          description: string | null
+          entry_fee: number
+          game: string
+          game_mode: string | null
+          id: string
+          invite_link: string | null
+          max_participants: number
+          owner_id: string
+          prize_pool: number | null
+          public: boolean
+          rounds: number
+          starts_at: string
+          status: string
+          title: string
+          tournament_type: string
+          updated_at: string
+        }
+        Insert: {
+          adjudication_method?: string
+          created_at?: string
+          description?: string | null
+          entry_fee?: number
+          game: string
+          game_mode?: string | null
+          id?: string
+          invite_link?: string | null
+          max_participants: number
+          owner_id: string
+          prize_pool?: number | null
+          public?: boolean
+          rounds?: number
+          starts_at: string
+          status?: string
+          title: string
+          tournament_type: string
+          updated_at?: string
+        }
+        Update: {
+          adjudication_method?: string
+          created_at?: string
+          description?: string | null
+          entry_fee?: number
+          game?: string
+          game_mode?: string | null
+          id?: string
+          invite_link?: string | null
+          max_participants?: number
+          owner_id?: string
+          prize_pool?: number | null
+          public?: boolean
+          rounds?: number
+          starts_at?: string
+          status?: string
+          title?: string
+          tournament_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

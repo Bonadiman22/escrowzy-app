@@ -63,7 +63,7 @@ export const createTournament = async (formData: TournamentFormData) => {
   }
 
   const { data, error } = await supabase
-    .from("tournaments")
+    .from("tournaments" as any)
     .insert({
       owner_id: user.data.user.id,
       title: formData.name, // Mapeando name do form para title da tabela
@@ -95,7 +95,7 @@ export const createTournament = async (formData: TournamentFormData) => {
 
 export const getTournamentDetails = async (tournamentId: string): Promise<Tournament | null> => {
   const { data, error } = await supabase
-    .from("tournaments")
+    .from("tournaments" as any)
     .select(`
       *,
       participants(
@@ -110,7 +110,7 @@ export const getTournamentDetails = async (tournamentId: string): Promise<Tourna
           email,
           full_name,
           display_name,
-          avatar_url // CRIAR um avatar_url na tabela profiles
+          avatar_url
         )
       )
     `)
@@ -126,7 +126,7 @@ export const getTournamentDetails = async (tournamentId: string): Promise<Tourna
 
 export const getTournamentParticipants = async (tournamentId: string): Promise<Participant[]> => {
   const { data, error } = await supabase
-    .from("participants")
+    .from("participants" as any)
     .select(`
       id,
       tournament_id,
@@ -153,8 +153,8 @@ export const getTournamentParticipants = async (tournamentId: string): Promise<P
 
 export const updateTournament = async (tournamentId: string, updates: Partial<Tournament>) => {
   const { data, error } = await supabase
-    .from("tournaments")
-    .update(updates)
+    .from("tournaments" as any)
+    .update(updates as any)
     .eq("id", tournamentId)
     .select()
     .single();
@@ -168,7 +168,7 @@ export const updateTournament = async (tournamentId: string, updates: Partial<To
 
 export const removeParticipantFromTournament = async (participantId: string) => {
   const { error } = await supabase
-    .from("participants")
+    .from("participants" as any)
     .delete()
     .eq("id", participantId);
 
@@ -181,12 +181,12 @@ export const removeParticipantFromTournament = async (participantId: string) => 
 
 export const joinTournament = async (tournamentId: string, userId: string, gamertag: string, entryFee: number) => {
   const { data, error } = await supabase
-    .from("participants")
+    .from("participants" as any)
     .insert({
       tournament_id: tournamentId,
       user_id: userId,
-      gamertag: gamertag, // Assumindo que gamertag é uma coluna na tabela participants
-      status: entryFee > 0 ? "pending" : "paid", // Mapeando payment_status para status
+      gamertag: gamertag,
+      status: entryFee > 0 ? "pending" : "paid",
       joined_at: new Date().toISOString(),
     })
     .select()

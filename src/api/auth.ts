@@ -1,4 +1,4 @@
-import apiClient from "../apiClient";
+import apiClient from "@/pages/apiClient";
 
 // Função para registrar um usuário
 export const registerUser = async (userData: {

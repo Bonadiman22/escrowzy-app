@@ -412,9 +412,9 @@ const TournamentDetails = () => {
             </CardHeader>
             <CardContent>
               {tournament.game_mode === "Mata-mata" ? (
-                <TournamentBracket participants={participants} maxPlayers={tournament.max_participants} />
+                <TournamentBracket participants={participants as any} maxPlayers={tournament.max_participants} />
               ) : (
-                <TournamentTable participants={participants} />
+                <TournamentTable participants={participants as any} />
               )}
             </CardContent>
           </Card>

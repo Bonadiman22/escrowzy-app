@@ -14,6 +14,7 @@ import {
   MapPin,
   AlertCircle
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { TournamentBracket } from "@/components/TournamentBracket";
 import { TournamentTable } from "@/components/TournamentTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -44,6 +45,7 @@ const TournamentParticipantView = () => {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [isUserParticipant, setIsUserParticipant] = useState(false);
 
@@ -311,9 +313,9 @@ const TournamentParticipantView = () => {
           </CardHeader>
           <CardContent>
               {tournament?.game_mode === "Mata-mata" ? (
-                <TournamentBracket participants={participants} maxPlayers={tournament.max_participants} />
+                <TournamentBracket participants={participants as any} maxPlayers={tournament.max_participants} />
               ) : (
-                <TournamentTable participants={participants} />
+                <TournamentTable participants={participants as any} />
               )}
           </CardContent>
         </Card>
