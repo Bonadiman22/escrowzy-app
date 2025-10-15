@@ -303,15 +303,11 @@ export const ProfileTab = ({ profile }: ProfileTabProps) => {
               </div>
               <div>
                 <Label htmlFor="cpf">CPF</Label>
-                <Input id="cpf" name="cpf" value={editedProfile.cpf || ''} onChange={handleChange} />
+                <Input id="cpf" name="cpf" value={editedProfile.cpf || ''} onChange={handleChange}  disabled/>
               </div>
               <div>
                 <Label htmlFor="phone">Telefone</Label>
                 <Input id="phone" name="phone" value={editedProfile.phone || ''} onChange={handleChange} />
-              </div>
-              <div>
-                <Label htmlFor="avatar_url">URL do Avatar</Label>
-                <Input id="avatar_url" name="avatar_url" value={editedProfile.avatar_url || ''} onChange={handleChange} />
               </div>
               <Button onClick={handleSave} className="w-full">
                 <Save className="w-4 h-4 mr-2" />
