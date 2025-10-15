@@ -476,6 +476,7 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
           </Card>
         </TabsContent>
       </Tabs>
+      
     </div>
   );
 };
