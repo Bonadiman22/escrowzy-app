@@ -13,7 +13,7 @@ import { Tables } from "@/integrations/supabase/types";
 
 type ProfileType = Tables<'profiles'>;
 
-// Mock data criar tabelas
+// Mock data (manter por enquanto, pois o foco é apenas no perfil do usuário)
 const mockStats = {
   totalWins: 142,
   winRate: 68,
