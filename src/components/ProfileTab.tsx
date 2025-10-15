@@ -325,4 +325,3 @@ export const ProfileTab = ({ profile }: ProfileTabProps) => {
   );
 };
 
-
