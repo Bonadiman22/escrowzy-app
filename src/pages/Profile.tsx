@@ -81,10 +81,8 @@ const Profile = () => {
         onOpenChange={setX1ChallengeOpen}
       />
     </div>
-    
   );
 };
 
 export default Profile;
-
 
