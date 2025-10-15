@@ -449,6 +449,15 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
+                <Label htmlFor="full_name">Nome Completo</Label>
+                <Input 
+                id="full_name" 
+                name="full_name"
+               value={editedProfile.full_name || ''} 
+               onChange={handleChange} disabled
+               />
+              </div>
+              <div>
                 <Label htmlFor="display_name">Nome de Exibição</Label>
                 <Input 
                   id="display_name" 
@@ -456,6 +465,34 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
                   value={editedProfile.display_name || ''} 
                   onChange={handleDisplayNameChange}
                   placeholder="Digite seu nome de exibição"
+                />
+              </div>
+               <div>
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                id="email" 
+                name="email" 
+                type="email" 
+                value={editedProfile.email || ''} 
+                onChange={handleChange} disabled 
+                />
+              </div>
+              <div>
+                <Label htmlFor="cpf">CPF</Label>
+                <Input 
+                id="cpf" 
+                name="cpf" 
+                value={editedProfile.cpf || ''} 
+                onChange={handleChange}
+                disabled />
+              </div>
+              <div>
+                <Label htmlFor="phone">Telefone</Label>
+                <Input 
+                id="phone" 
+                name="phone" 
+                value={editedProfile.phone || ''} 
+                onChange={handleChange} disabled 
                 />
               </div>
               
