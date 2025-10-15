@@ -282,7 +282,7 @@ export const ProfileTab = ({ profile }: ProfileTabProps) => {
           </div>
         </TabsContent>
 
-        {/* Aba 4: Editar Perfil */}
+         {/* Aba 4: Editar Perfil */}
         <TabsContent value="edit" className="space-y-6">
           <Card className="glass-card">
             <CardHeader>
@@ -303,7 +303,7 @@ export const ProfileTab = ({ profile }: ProfileTabProps) => {
               </div>
               <div>
                 <Label htmlFor="cpf">CPF</Label>
-                <Input id="cpf" name="cpf" value={editedProfile.cpf || ''} onChange={handleChange}  disabled/>
+                <Input id="cpf" name="cpf" value={editedProfile.cpf || ''} onChange={handleChange}  disabled />
               </div>
               <div>
                 <Label htmlFor="phone">Telefone</Label>
@@ -320,4 +320,7 @@ export const ProfileTab = ({ profile }: ProfileTabProps) => {
     </div>
   );
 };
+
+
+  
 
