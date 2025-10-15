@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data (manter por enquanto, pois o foco é apenas no perfil do usuário) falta adicionar no banco de dados 
+// Mock data falta adicionar no banco de dados 
 const mockStats = {
   totalWins: 142,
   winRate: 68,
@@ -441,7 +441,7 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
           </div>
         </TabsContent>
 
-        {/* Aba 4: Editar Perfil */}
+     {/* Aba 4: Editar Perfil */}
         <TabsContent value="edit" className="space-y-6">
           <Card className="glass-card">
             <CardHeader>
@@ -449,16 +449,26 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="display_name">Nome de Exibição</Label>
-                <Input 
-                  id="display_name" 
-                  name="display_name" 
-                  value={editedProfile.display_name || ''} 
-                  onChange={handleDisplayNameChange}
-                  placeholder="Digite seu nome de exibição"
-                />
+                <Label htmlFor="full_name">Nome Completo</Label>
+                <Input id="full_name" name="full_name" value={editedProfile.full_name || ''} onChange={handleChange} disabled/>
               </div>
-              
+              <div>
+                <Label htmlFor="display_name">Nome de Exibição</Label>
+                <Input id="display_name" name="display_name" value={editedProfile.display_name || ''} onChange={handleChange} />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" value={editedProfile.email || ''} onChange={handleChange} disabled />
+              </div>
+              <div>
+                <Label htmlFor="cpf">CPF</Label>
+                <Input id="cpf" name="cpf" value={editedProfile.cpf || ''} onChange={handleChange}disabled />
+              </div>
+              <div>
+                <Label htmlFor="phone">Telefone</Label>
+                <Input id="phone" name="phone" value={editedProfile.phone || ''} onChange={handleChange} disabled />
+              </div>
+              <div>
               <Button onClick={handleSave} className="w-full" disabled={saving}>
                 <Save className="w-4 h-4 mr-2" />
                 {saving ? "Salvando..." : "Salvar Alterações"}
