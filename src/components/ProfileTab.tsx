@@ -1,19 +1,24 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Trophy, Target, Zap, TrendingUp, Edit2, Save, Camera, DollarSign, Gamepad2, PieChart, Lock, Calendar } from "lucide-react";
+import { Trophy, Edit2, Save, Camera, DollarSign, Gamepad2, PieChart, Lock, Calendar, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Tables } from "@/integrations/supabase/types";
+import { profileService, ProfileType } from "@/services/profileService";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
-type ProfileType = Tables<'profiles'>;
-
-// Mock data (manter por enquanto, pois o foco é apenas no perfil do usuário)
+// Mock data (manter por enquanto, pois o foco é apenas no perfil do usuário) falta adicionar no banco de dados 
 const mockStats = {
   totalWins: 142,
   winRate: 68,
@@ -44,29 +49,114 @@ const mockGameStats = [
   { game: "League of Legends", wins: 27, losses: 15, winRate: 64, balance: 200 },
 ];
 
+// DiceBear Avatar Styles
+const avatarStyles = [
+  "adventurer",
+  "adventurer-neutral",
+  "avataaars",
+  "avataaars-neutral",
+  "big-ears",
+  "big-ears-neutral",
+  "big-smile",
+  "bottts",
+  "bottts-neutral",
+  "croodles",
+  "croodles-neutral",
+  "fun-emoji",
+  "icons",
+  "identicon",
+  "lorelei",
+  "lorelei-neutral",
+  "micah",
+  "miniavs",
+  "notionists",
+  "notionists-neutral",
+  "open-peeps",
+  "personas",
+  "pixel-art",
+  "pixel-art-neutral",
+];
+
 interface ProfileTabProps {
   profile: ProfileType;
+  setProfile: React.Dispatch<React.SetStateAction<ProfileType | null>>;
 }
 
-export const ProfileTab = ({ profile }: ProfileTabProps) => {
-  const [isEditing, setIsEditing] = useState(false);
+export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
   const [editedProfile, setEditedProfile] = useState<ProfileType>(profile);
+  const [saving, setSaving] = useState(false);
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+  const [selectedAvatarStyle, setSelectedAvatarStyle] = useState("avataaars");
+  const [avatarSeed, setAvatarSeed] = useState(profile.display_name || profile.full_name || "");
+  const [activeTab, setActiveTab] = useState("overview");
+  const { toast } = useToast();
 
-  const handleSave = () => {
-    // Lógica para salvar as alterações no Supabase
-    // Por enquanto, apenas desativa o modo de edição
-    setIsEditing(false);
-    console.log("Perfil salvo:", editedProfile);
+  // Atualiza o estado interno editedProfile quando o profile prop muda
+  useEffect(() => {
+    setEditedProfile(profile);
+    setAvatarSeed(profile.display_name || profile.full_name || "");
+  }, [profile]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Atualizar apenas display_name e avatar_url
+      const dataToUpdate: Partial<ProfileType> = {
+        display_name: editedProfile.display_name,
+        avatar_url: editedProfile.avatar_url,
+      };
+
+      const updated = await profileService.updateProfile(dataToUpdate);
+      setProfile(updated);
+      
+      toast({
+        title: "Perfil atualizado!",
+        description: "Suas alterações foram salvas com sucesso.",
+      });
+      
+      console.log("Perfil salvo com sucesso:", updated);
+    } catch (err: any) {
+      toast({
+        title: "Erro ao salvar",
+        description: err.message,
+        variant: "destructive",
+      });
+      console.error("Erro ao salvar perfil:", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setEditedProfile(prev => ({ ...prev, [name]: value }));
+  const handleDisplayNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedProfile(prev => ({ ...prev, display_name: e.target.value }));
   };
 
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('pt-BR', options);
+  };
+
+  const generateAvatarUrl = (style: string, seed: string) => {
+    return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed )}`;
+  };
+
+  const handleAvatarSelect = (style: string) => {
+    setSelectedAvatarStyle(style);
+  };
+
+  const handleAvatarSave = () => {
+    const newAvatarUrl = generateAvatarUrl(selectedAvatarStyle, avatarSeed);
+    setEditedProfile(prev => ({ ...prev, avatar_url: newAvatarUrl }));
+    setAvatarDialogOpen(false);
+    
+    toast({
+      title: "Avatar selecionado!",
+      description: "Não esqueça de clicar em 'Salvar Alterações' para confirmar.",
+    });
+  };
+
+  const randomizeAvatar = () => {
+    setAvatarSeed(Math.random().toString(36).substring(7));
   };
 
   return (
@@ -75,26 +165,95 @@ export const ProfileTab = ({ profile }: ProfileTabProps) => {
       <Card className="glass-card">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-6 items-start">
-            <div className="relative group">
-              <Avatar className="w-32 h-32">
-                <AvatarImage src={profile.avatar_url || ''} />
-                <AvatarFallback className="text-4xl">{profile.display_name ? profile.display_name.substring(0, 2).toUpperCase() : profile.full_name.substring(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                <Camera className="w-8 h-8 text-white" />
-              </div>
-            </div>
+            <Dialog open={avatarDialogOpen} onOpenChange={setAvatarDialogOpen}>
+              <DialogTrigger asChild>
+                <div className="relative group cursor-pointer">
+                  <Avatar className="w-32 h-32">
+                    <AvatarImage src={editedProfile.avatar_url || ''} />
+                    <AvatarFallback className="text-4xl">
+                      {editedProfile.display_name 
+                        ? editedProfile.display_name.substring(0, 2).toUpperCase() 
+                        : editedProfile.full_name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Escolher Avatar</DialogTitle>
+                  <DialogDescription>
+                    Selecione um estilo de avatar e personalize-o.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <Label htmlFor="avatar-seed">Personalizar Avatar</Label>
+                      <Input
+                        id="avatar-seed"
+                        value={avatarSeed}
+                        onChange={(e) => setAvatarSeed(e.target.value)}
+                        placeholder="Digite um texto para personalizar"
+                      />
+                    </div>
+                    <Button onClick={randomizeAvatar} variant="outline" className="mt-6">
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Aleatório
+                    </Button>
+                  </div>
+                  
+                  <div className="flex justify-center p-4 bg-muted rounded-lg">
+                    <Avatar className="w-32 h-32">
+                      <AvatarImage src={generateAvatarUrl(selectedAvatarStyle, avatarSeed)} />
+                      <AvatarFallback>Preview</AvatarFallback>
+                    </Avatar>
+                  </div>
 
-            <div className="flex-1 space-y-2">
-              <h2 className="text-3xl font-bold">{profile.display_name || profile.full_name}</h2>
-              <p className="text-muted-foreground">@{profile.full_name.toLowerCase().replace(/\s/g, ".")}</p>
+                  <div>
+                    <Label>Estilos de Avatar</Label>
+                    <div className="grid grid-cols-4 md:grid-cols-6 gap-4 mt-2">
+                      {avatarStyles.map((style) => (
+                        <div
+                          key={style}
+                          className={`cursor-pointer border-2 rounded-lg p-2 hover:border-primary transition-colors ${
+                            selectedAvatarStyle === style ? 'border-primary' : 'border-border'
+                          }`}
+                          onClick={() => handleAvatarSelect(style)}
+                        >
+                          <Avatar className="w-full aspect-square">
+                            <AvatarImage src={generateAvatarUrl(style, avatarSeed)} />
+                            <AvatarFallback>{style.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <p className="text-xs text-center mt-1 truncate">{style}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button onClick={handleAvatarSave} className="w-full">
+                    Selecionar Avatar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <div className="flex-1 space-y-4">
+              <div>
+                <h2 className="text-3xl font-bold">{profile.display_name || profile.full_name}</h2>
+                <p className="text-muted-foreground">@{profile.full_name.toLowerCase().replace(/\s/g, ".")}</p>
+              </div>
+              
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
                 <span>Membro desde {formatDate(profile.created_at)}</span>
               </div>
-              <Button className="mt-4" onClick={() => setIsEditing(!isEditing)}>
-                {isEditing ? <Save className="w-4 h-4 mr-2" /> : <Edit2 className="w-4 h-4 mr-2" />}
-                {isEditing ? "Salvar Perfil" : "Editar Perfil"}
+
+              <Button className="mt-4" onClick={() => setActiveTab("edit")}>
+                <Edit2 className="w-4 h-4 mr-2" />
+                Editar Perfil
               </Button>
             </div>
           </div>
@@ -102,7 +261,7 @@ export const ProfileTab = ({ profile }: ProfileTabProps) => {
       </Card>
 
       {/* Sistema de Abas */}
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="achievements">Conquistas</TabsTrigger>
@@ -290,32 +449,19 @@ export const ProfileTab = ({ profile }: ProfileTabProps) => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="full_name">Nome Completo</Label>
-                <Input id="full_name" name="full_name" value={editedProfile.full_name || ''} onChange={handleChange} />
-              </div>
-              <div>
                 <Label htmlFor="display_name">Nome de Exibição</Label>
-                <Input id="display_name" name="display_name" value={editedProfile.display_name || ''} onChange={handleChange} />
+                <Input 
+                  id="display_name" 
+                  name="display_name" 
+                  value={editedProfile.display_name || ''} 
+                  onChange={handleDisplayNameChange}
+                  placeholder="Digite seu nome de exibição"
+                />
               </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" value={editedProfile.email || ''} onChange={handleChange} disabled />
-              </div>
-              <div>
-                <Label htmlFor="cpf">CPF</Label>
-                <Input id="cpf" name="cpf" value={editedProfile.cpf || ''} onChange={handleChange} />
-              </div>
-              <div>
-                <Label htmlFor="phone">Telefone</Label>
-                <Input id="phone" name="phone" value={editedProfile.phone || ''} onChange={handleChange} />
-              </div>
-              <div>
-                <Label htmlFor="avatar_url">URL do Avatar</Label>
-                <Input id="avatar_url" name="avatar_url" value={editedProfile.avatar_url || ''} onChange={handleChange} />
-              </div>
-              <Button onClick={handleSave} className="w-full">
+              
+              <Button onClick={handleSave} className="w-full" disabled={saving}>
                 <Save className="w-4 h-4 mr-2" />
-                Salvar Alterações
+                {saving ? "Salvando..." : "Salvar Alterações"}
               </Button>
             </CardContent>
           </Card>
@@ -324,4 +470,3 @@ export const ProfileTab = ({ profile }: ProfileTabProps) => {
     </div>
   );
 };
-
