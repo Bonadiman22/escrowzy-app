@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+// Importações de componentes
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data  falta adicionar no banco de dados 
+// Mock data (falta adicionar no banco de dados) 
 const mockStats = {
   totalWins: 142,
   winRate: 68,
@@ -77,12 +78,18 @@ const avatarStyles = [
   "pixel-art-neutral",
 ];
 
+// ----------------------------------------------------
+// 1. INTERFACE DE PROPS
+// ----------------------------------------------------
 interface ProfileTabProps {
   profile: ProfileType;
   setProfile: React.Dispatch<React.SetStateAction<ProfileType | null>>;
 }
 
-export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
+// ----------------------------------------------------
+// 2. DECLARAÇÃO DO COMPONENTE (Tipagem corrigida)
+// ----------------------------------------------------
+export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) => {
   const [editedProfile, setEditedProfile] = useState<ProfileType>(profile);
   const [saving, setSaving] = useState(false);
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
@@ -97,6 +104,9 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
     setAvatarSeed(profile.display_name || profile.full_name || "");
   }, [profile]);
 
+  // ----------------------------------------------------
+  // FUNÇÃO handleSave (Corrigida e Unificada)
+  // ----------------------------------------------------
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -107,45 +117,50 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
       };
 
       const updated = await profileService.updateProfile(dataToUpdate);
-      setProfile(updated);
+      
+      // Chama a função de atualização do estado principal (prop)
+      setProfile(updated); 
       
       toast({
         title: "Perfil atualizado!",
         description: "Suas alterações foram salvas com sucesso.",
       });
-      
-      console.log("Perfil salvo com sucesso:", updated);
+
     } catch (err: any) {
+      console.error("Erro ao salvar perfil:", err);
       toast({
         title: "Erro ao salvar",
-        description: err.message,
+        description: err.message || "Ocorreu um erro desconhecido.",
         variant: "destructive",
       });
-      console.error("Erro ao salvar perfil:", err);
     } finally {
       setSaving(false);
     }
   };
 
+  // ----------------------------------------------------
+  // FUNÇÕES DE ALTERAÇÃO (Corrigido o erro de digitação do full_name)
+  // ----------------------------------------------------
   const handleDisplayNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedProfile(prev => ({ ...prev, display_name: e.target.value }));
   };
 
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedProfile(prev => ({ ...prev, full_name_name: e.target.value }));
-      };
+    // Correção: de full_name_name para full_name
+    setEditedProfile(prev => ({ ...prev, full_name: e.target.value })); 
+  };
 
-    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedProfile(prev => ({ ...prev, email: e.target.value }));
-      };
+  };
 
-      const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedProfile(prev => ({ ...prev, cpf: e.target.value }));
-      };
+  };
 
-      const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedProfile(prev => ({ ...prev, phone: e.target.value }));
-      };
+  };
 
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -153,7 +168,7 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
   };
 
   const generateAvatarUrl = (style: string, seed: string) => {
-    return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed )}`;
+    return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
   };
 
   const handleAvatarSelect = (style: string) => {
@@ -175,6 +190,9 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
     setAvatarSeed(Math.random().toString(36).substring(7));
   };
 
+  // ----------------------------------------------------
+  // 3. JSX (O corpo do componente)
+  // ----------------------------------------------------
   return (
     <div className="space-y-6">
       {/* Cabeçalho do Perfil */}
@@ -469,9 +487,9 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
                 <Input 
                 id="full_name" 
                 name="full_name"
-               value={editedProfile.full_name || ''} 
-               onChange={handleFullNameChange} disabled
-               />
+                value={editedProfile.full_name || ''} 
+                onChange={handleFullNameChange} disabled
+                />
               </div>
               <div>
                 <Label htmlFor="display_name">Nome de Exibição</Label>
@@ -483,7 +501,7 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
                   placeholder="Digite seu nome de exibição"
                 />
               </div>
-               <div>
+                <div>
                 <Label htmlFor="email">Email</Label>
                 <Input 
                 id="email" 
