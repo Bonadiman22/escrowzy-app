@@ -46,6 +46,7 @@ export const profileService = {
       throw new Error("Erro ao atualizar perfil: " + error.message);
     }
     return data;
+    
   },
 };
 
