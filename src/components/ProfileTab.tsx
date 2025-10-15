@@ -468,7 +468,6 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
                 <Label htmlFor="phone">Telefone</Label>
                 <Input id="phone" name="phone" value={editedProfile.phone || ''} onChange={handleChange} disabled />
               </div>
-              <div>
               <Button onClick={handleSave} className="w-full" disabled={saving}>
                 <Save className="w-4 h-4 mr-2" />
                 {saving ? "Salvando..." : "Salvar Alterações"}
