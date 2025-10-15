@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,19 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Trophy, Target, Zap, TrendingUp, Edit2, Save, Camera, DollarSign, Gamepad2, PieChart, Lock, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Tables } from "@/integrations/supabase/types";
 
-// Mock data
-const mockProfile = {
-  username: "ProGamer2024",
-  realName: "João Silva",
-  email: "progamer@example.com",
-  bio: "Jogador competitivo de FIFA e CS2. Sempre em busca de novos desafios!",
-  memberSince: "08 de Outubro de 2025",
-  riotId: "ProGamer#BR1",
-  psnId: "ProGamer_PSN",
-  steamId: "progamer2024",
-};
+type ProfileType = Tables<'profiles'>;
 
+// Mock data (manter por enquanto, pois o foco é apenas no perfil do usuário)
 const mockStats = {
   totalWins: 142,
   winRate: 68,
@@ -51,11 +44,29 @@ const mockGameStats = [
   { game: "League of Legends", wins: 27, losses: 15, winRate: 64, balance: 200 },
 ];
 
-export const ProfileTab = () => {
-  const [profile, setProfile] = useState(mockProfile);
+interface ProfileTabProps {
+  profile: ProfileType;
+}
+
+export const ProfileTab = ({ profile }: ProfileTabProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedProfile, setEditedProfile] = useState<ProfileType>(profile);
 
   const handleSave = () => {
-    // Aqui você salvaria as alterações no backend
+    // Lógica para salvar as alterações no Supabase
+    // Por enquanto, apenas desativa o modo de edição
+    setIsEditing(false);
+    console.log("Perfil salvo:", editedProfile);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditedProfile(prev => ({ ...prev, [name]: value }));
+  };
+
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('pt-BR', options);
   };
 
   return (
@@ -66,8 +77,8 @@ export const ProfileTab = () => {
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <div className="relative group">
               <Avatar className="w-32 h-32">
-                <AvatarImage src="" />
-                <AvatarFallback className="text-4xl">{profile.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarImage src={profile.avatar_url || ''} />
+                <AvatarFallback className="text-4xl">{profile.display_name ? profile.display_name.substring(0, 2).toUpperCase() : profile.full_name.substring(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                 <Camera className="w-8 h-8 text-white" />
@@ -75,15 +86,15 @@ export const ProfileTab = () => {
             </div>
 
             <div className="flex-1 space-y-2">
-              <h2 className="text-3xl font-bold">{profile.username}</h2>
-              <p className="text-muted-foreground">@{profile.realName.toLowerCase().replace(" ", ".")}</p>
+              <h2 className="text-3xl font-bold">{profile.display_name || profile.full_name}</h2>
+              <p className="text-muted-foreground">@{profile.full_name.toLowerCase().replace(/\s/g, ".")}</p>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
-                <span>Membro desde {profile.memberSince}</span>
+                <span>Membro desde {formatDate(profile.created_at)}</span>
               </div>
-              <Button className="mt-4">
-                <Edit2 className="w-4 h-4 mr-2" />
-                Editar Perfil
+              <Button className="mt-4" onClick={() => setIsEditing(!isEditing)}>
+                {isEditing ? <Save className="w-4 h-4 mr-2" /> : <Edit2 className="w-4 h-4 mr-2" />}
+                {isEditing ? "Salvar Perfil" : "Editar Perfil"}
               </Button>
             </div>
           </div>
@@ -243,27 +254,25 @@ export const ProfileTab = () => {
               {mockGameStats.map((stat, index) => (
                 <Card key={index} className="glass-card">
                   <CardContent className="pt-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <Gamepad2 className="w-6 h-6 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-lg">{stat.game}</p>
-                          <p className="text-sm text-muted-foreground">{stat.wins}V - {stat.losses}D</p>
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Gamepad2 className="w-5 h-5 text-muted-foreground" />
+                        <p className="font-medium">{stat.game}</p>
                       </div>
-                      <div className="flex items-center gap-6">
-                        <div className="text-center">
-                          <p className="text-2xl font-bold">{stat.winRate}%</p>
-                          <p className="text-xs text-muted-foreground">Taxa de Vitória</p>
-                        </div>
-                        <div className="text-center">
-                          <p className={`text-2xl font-bold ${stat.balance >= 0 ? 'text-success' : 'text-destructive'}`}>
-                            {stat.balance >= 0 ? '+' : ''} R$ {stat.balance}
-                          </p>
-                          <p className="text-xs text-muted-foreground">Saldo</p>
-                        </div>
+                      <Badge variant="secondary">{stat.winRate}% Win Rate</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Vitórias</p>
+                        <p className="font-bold">{stat.wins}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Derrotas</p>
+                        <p className="font-bold">{stat.losses}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Ganhos</p>
+                        <p className="font-bold">R$ {stat.balance}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -277,113 +286,42 @@ export const ProfileTab = () => {
         <TabsContent value="edit" className="space-y-6">
           <Card className="glass-card">
             <CardHeader>
-              <CardTitle>Alterar Foto de Perfil</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-6">
-                <Avatar className="w-24 h-24">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="text-3xl">{profile.username.substring(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <Button variant="outline">
-                  <Camera className="w-4 h-4 mr-2" />
-                  Escolher nova foto
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle>Informações Pessoais</CardTitle>
+              <CardTitle>Editar Informações do Perfil</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="username">Nickname</Label>
-                <Input
-                  id="username"
-                  value={profile.username}
-                  onChange={(e) => setProfile({ ...profile, username: e.target.value })}
-                />
+                <Label htmlFor="full_name">Nome Completo</Label>
+                <Input id="full_name" name="full_name" value={editedProfile.full_name || ''} onChange={handleChange} />
               </div>
               <div>
-                <Label htmlFor="realName">Nome Completo</Label>
-                <Input
-                  id="realName"
-                  value={profile.realName}
-                  onChange={(e) => setProfile({ ...profile, realName: e.target.value })}
-                />
+                <Label htmlFor="display_name">Nome de Exibição</Label>
+                <Input id="display_name" name="display_name" value={editedProfile.display_name || ''} onChange={handleChange} />
               </div>
               <div>
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profile.email}
-                  disabled
-                  className="opacity-50"
-                />
-                <p className="text-xs text-muted-foreground mt-1">O e-mail não pode ser alterado por segurança</p>
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" value={editedProfile.email || ''} onChange={handleChange} disabled />
               </div>
               <div>
-                <Label htmlFor="bio">Bio Curta</Label>
-                <Textarea
-                  id="bio"
-                  value={profile.bio}
-                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                  placeholder="Conte um pouco sobre você..."
-                  rows={4}
-                />
+                <Label htmlFor="cpf">CPF</Label>
+                <Input id="cpf" name="cpf" value={editedProfile.cpf || ''} onChange={handleChange} />
               </div>
+              <div>
+                <Label htmlFor="phone">Telefone</Label>
+                <Input id="phone" name="phone" value={editedProfile.phone || ''} onChange={handleChange} />
+              </div>
+              <div>
+                <Label htmlFor="avatar_url">URL do Avatar</Label>
+                <Input id="avatar_url" name="avatar_url" value={editedProfile.avatar_url || ''} onChange={handleChange} />
+              </div>
+              <Button onClick={handleSave} className="w-full">
+                <Save className="w-4 h-4 mr-2" />
+                Salvar Alterações
+              </Button>
             </CardContent>
           </Card>
-
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle>Contas de Jogo</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="riotId">Riot ID</Label>
-                <Input
-                  id="riotId"
-                  value={profile.riotId}
-                  onChange={(e) => setProfile({ ...profile, riotId: e.target.value })}
-                  placeholder="Nome#TAG"
-                />
-              </div>
-              <div>
-                <Label htmlFor="psnId">PSN ID</Label>
-                <Input
-                  id="psnId"
-                  value={profile.psnId}
-                  onChange={(e) => setProfile({ ...profile, psnId: e.target.value })}
-                  placeholder="Seu ID da PlayStation"
-                />
-              </div>
-              <div>
-                <Label htmlFor="steamId">Steam ID</Label>
-                <Input
-                  id="steamId"
-                  value={profile.steamId}
-                  onChange={(e) => setProfile({ ...profile, steamId: e.target.value })}
-                  placeholder="Seu ID da Steam"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="flex items-center justify-between">
-            <Button variant="outline">
-              Alterar Senha
-            </Button>
-            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Alterações
-            </Button>
-          </div>
         </TabsContent>
       </Tabs>
     </div>
   );
 };
+
