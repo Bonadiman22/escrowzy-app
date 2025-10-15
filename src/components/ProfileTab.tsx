@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data (manter por enquanto, pois o foco é apenas no perfil do usuário) falta adicionar no banco de dados 
+// Mock data  falta adicionar no banco de dados 
 const mockStats = {
   totalWins: 142,
   winRate: 68,
@@ -130,6 +130,22 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
   const handleDisplayNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedProfile(prev => ({ ...prev, display_name: e.target.value }));
   };
+
+  const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedProfile(prev => ({ ...prev, full_name_name: e.target.value }));
+      };
+
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedProfile(prev => ({ ...prev, email: e.target.value }));
+      };
+
+      const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedProfile(prev => ({ ...prev, cpf: e.target.value }));
+      };
+
+      const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedProfile(prev => ({ ...prev, phone: e.target.value }));
+      };
 
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -454,7 +470,7 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
                 id="full_name" 
                 name="full_name"
                value={editedProfile.full_name || ''} 
-               onChange={handleChange} disabled
+               onChange={handleFullNameChange} disabled
                />
               </div>
               <div>
@@ -474,7 +490,7 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
                 name="email" 
                 type="email" 
                 value={editedProfile.email || ''} 
-                onChange={handleChange} disabled 
+                onChange={handleEmailChange} disabled 
                 />
               </div>
               <div>
@@ -483,7 +499,7 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
                 id="cpf" 
                 name="cpf" 
                 value={editedProfile.cpf || ''} 
-                onChange={handleChange}
+                onChange={handleCpfChange}
                 disabled />
               </div>
               <div>
@@ -492,7 +508,7 @@ export const ProfileTab = ({ profile, setProfile }: ProfileTabProps) => {
                 id="phone" 
                 name="phone" 
                 value={editedProfile.phone || ''} 
-                onChange={handleChange} disabled 
+                onChange={handlePhoneChange} disabled 
                 />
               </div>
               
