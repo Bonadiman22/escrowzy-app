@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Edit2, Save, Camera, DollarSign, Gamepad2, PieChart, Lock, Calendar, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { profileService, ProfileType } from "@/services/profileService";
+import { profileService, ProfileType ,AchievementType } from "@/services/profileService";
 import {
   Dialog,
   DialogContent,
@@ -103,6 +103,28 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
     setEditedProfile(profile);
     setAvatarSeed(profile.display_name || profile.full_name || "");
   }, [profile]);
+  
+  // Carregar conquistas do banco de dados
+  useEffect(() => {
+    const fetchAchievements = async () => {
+      try {
+        setLoadingAchievements(true);
+        const fetchedAchievements = await profileService.getAchievements(profile.id);
+        setAchievements(fetchedAchievements);
+      } catch (error) {
+        console.error("Erro ao carregar conquistas:", error);
+        toast({
+          title: "Erro ao carregar conquistas",
+          description: "Não foi possível carregar suas conquistas.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingAchievements(false);
+      }
+    };
+
+    fetchAchievements();
+  }, [toast]);
 
   // ----------------------------------------------------
   // FUNÇÃO handleSave (Corrigida e Unificada)
@@ -369,14 +391,15 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
 
           {/* Conquistas em Destaque */}
           <div>
-            <h3 className="text-xl font-bold mb-4">Últimas Conquistas</h3>
+               <h3 className="text-xl font-bold mb-4">Últimas Conquistas</h3>
+            {loadingAchievements && <p className="text-muted-foreground">Carregando conquistas...</p>}
             <div className="flex gap-4 overflow-x-auto pb-2">
-              {mockAchievements.filter(a => a.unlocked).slice(0, 4).map((achievement) => (
+              {achievements.filter(a => a.unlocked).slice(0, 4).map((achievement) => (
                 <Card key={achievement.id} className="glass-card min-w-[150px] cursor-pointer hover:scale-105 transition-transform">
                   <CardContent className="pt-6 text-center">
                     <div className="text-5xl mb-2">{achievement.icon}</div>
                     <p className="font-bold">{achievement.name}</p>
-                    <p className="text-xs text-muted-foreground">{achievement.date}</p>
+                      <p className="text-xs text-muted-foreground">{achievement.date ? formatDate(achievement.date) : 'Data indisponível'}</p>
                   </CardContent>
                 </Card>
               ))}
