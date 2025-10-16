@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Edit2, Save, Camera, DollarSign, Gamepad2, PieChart, Lock, Calendar, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { profileService, ProfileType ,AchievementType } from "@/services/profileService";
+import { profileService, ProfileType, AchievementType } from "@/services/profileService";
 import {
   Dialog,
   DialogContent,
@@ -19,36 +19,6 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data (falta adicionar no banco de dados) 
-const mockStats = {
-  totalWins: 142,
-  winRate: 68,
-  totalPrize: 1250,
-  bestGame: "EA FC 25",
-};
-
-const mockAchievements = [
-  { id: 1, name: "Invencível", icon: "🏆", unlocked: true, date: "15/09/2025", description: "Vença 5 partidas seguidas" },
-  { id: 2, name: "Milionário", icon: "💰", unlocked: true, date: "20/09/2025", description: "Ganhe R$ 1.000 em prêmios" },
-  { id: 3, name: "Veterano", icon: "🎖️", unlocked: true, date: "01/10/2025", description: "Participe de 50 torneios" },
-  { id: 4, name: "Dominador", icon: "👑", unlocked: false, date: null, description: "Vença 10 partidas seguidas" },
-  { id: 5, name: "Lendário", icon: "⭐", unlocked: false, date: null, description: "Alcance 90% de taxa de vitória" },
-  { id: 6, name: "Campeão", icon: "🥇", unlocked: false, date: null, description: "Vença 100 torneios" },
-];
-
-const mockRecentMatches = [
-  { game: "EA FC 25", opponent: "PlayerX", result: "win", date: "Hoje" },
-  { game: "CS2", opponent: "NoobMaster", result: "win", date: "Ontem" },
-  { game: "EA FC 25", opponent: "ProPlayer", result: "loss", date: "2 dias atrás" },
-  { game: "Valorant", opponent: "SharpShooter", result: "win", date: "3 dias atrás" },
-];
-
-const mockGameStats = [
-  { game: "EA FC 25", wins: 45, losses: 15, winRate: 75, balance: 450 },
-  { game: "CS2", wins: 38, losses: 22, winRate: 63, balance: 320 },
-  { game: "Valorant", wins: 32, losses: 18, winRate: 64, balance: 280 },
-  { game: "League of Legends", wins: 27, losses: 15, winRate: 64, balance: 200 },
-];
 
 // DiceBear Avatar Styles
 const avatarStyles = [
@@ -96,6 +66,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
   const [selectedAvatarStyle, setSelectedAvatarStyle] = useState("avataaars");
   const [avatarSeed, setAvatarSeed] = useState(profile.display_name || profile.full_name || "");
   const [activeTab, setActiveTab] = useState("overview");
+  const [achievements, setAchievements] = useState<AchievementType[]>([]);
+  const [loadingAchievements, setLoadingAchievements] = useState(true);
   const { toast } = useToast();
 
   // Atualiza o estado interno editedProfile quando o profile prop muda
@@ -103,7 +75,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
     setEditedProfile(profile);
     setAvatarSeed(profile.display_name || profile.full_name || "");
   }, [profile]);
-  
+
   // Carregar conquistas do banco de dados
   useEffect(() => {
     const fetchAchievements = async () => {
@@ -163,27 +135,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
   // ----------------------------------------------------
   // FUNÇÕES DE ALTERAÇÃO (Corrigido o erro de digitação do full_name)
   // ----------------------------------------------------
-  const handleDisplayNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedProfile(prev => ({ ...prev, display_name: e.target.value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditedProfile(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Correção: de full_name_name para full_name
-    setEditedProfile(prev => ({ ...prev, full_name: e.target.value })); 
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedProfile(prev => ({ ...prev, email: e.target.value }));
-  };
-
-  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedProfile(prev => ({ ...prev, cpf: e.target.value }));
-  };
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedProfile(prev => ({ ...prev, phone: e.target.value }));
-  };
-
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('pt-BR', options);
@@ -338,7 +293,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
                       <Trophy className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">{mockStats.totalWins}</p>
+                      <p className="text-2xl font-bold">{/* Dados do banco de dados */}</p>
                       <p className="text-sm text-muted-foreground">Vitórias Totais</p>
                     </div>
                   </div>
@@ -352,7 +307,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
                       <PieChart className="w-6 h-6 text-success" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">{mockStats.winRate}%</p>
+                      <p className="text-2xl font-bold">{/* Dados do banco de dados */}%</p>
                       <p className="text-sm text-muted-foreground">Taxa de Vitória</p>
                     </div>
                   </div>
@@ -366,7 +321,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
                       <DollarSign className="w-6 h-6 text-warning" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">R$ {mockStats.totalPrize}</p>
+                      <p className="text-2xl font-bold">R$ {/* Dados do banco de dados */}</p>
                       <p className="text-sm text-muted-foreground">Total em Prêmios</p>
                     </div>
                   </div>
@@ -380,7 +335,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
                       <Gamepad2 className="w-6 h-6 text-secondary" />
                     </div>
                     <div>
-                      <p className="text-xl font-bold">{mockStats.bestGame}</p>
+                      <p className="text-xl font-bold">{/* Dados do banco de dados */}</p>
                       <p className="text-sm text-muted-foreground">Melhor Jogo</p>
                     </div>
                   </div>
@@ -391,7 +346,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
 
           {/* Conquistas em Destaque */}
           <div>
-               <h3 className="text-xl font-bold mb-4">Últimas Conquistas</h3>
+            <h3 className="text-xl font-bold mb-4">Últimas Conquistas</h3>
             {loadingAchievements && <p className="text-muted-foreground">Carregando conquistas...</p>}
             <div className="flex gap-4 overflow-x-auto pb-2">
               {achievements.filter(a => a.unlocked).slice(0, 4).map((achievement) => (
@@ -412,7 +367,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
             <Card className="glass-card">
               <CardContent className="pt-6">
                 <div className="space-y-3">
-                  {mockRecentMatches.map((match, index) => (
+                  {/* Dados do banco de dados */}.map((match, index) => (
                     <div key={index} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
                       <div className="flex items-center gap-3">
                         <Gamepad2 className="w-5 h-5 text-muted-foreground" />
@@ -439,8 +394,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
         <TabsContent value="achievements" className="space-y-6">
           <div>
             <h3 className="text-xl font-bold mb-4">Sala de Troféus</h3>
+            {loadingAchievements && <p className="text-muted-foreground">Carregando conquistas...</p>}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {mockAchievements.map((achievement) => (
+              {achievements.map((achievement) => (
                 <Card 
                   key={achievement.id} 
                   className={`glass-card text-center ${!achievement.unlocked && 'opacity-50'}`}
@@ -467,7 +423,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
           <div>
             <h3 className="text-xl font-bold mb-4">Desempenho por Jogo</h3>
             <div className="space-y-4">
-              {mockGameStats.map((stat, index) => (
+              {/* Dados do banco de dados */}.map((stat, index) => (
                 <Card key={index} className="glass-card">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
@@ -511,7 +467,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
                 id="full_name" 
                 name="full_name"
                 value={editedProfile.full_name || ''} 
-                onChange={handleFullNameChange} disabled
+                onChange={handleChange} disabled
                 />
               </div>
               <div>
@@ -520,7 +476,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
                   id="display_name" 
                   name="display_name" 
                   value={editedProfile.display_name || ''} 
-                  onChange={handleDisplayNameChange}
+                  onChange={handleChange}
                   placeholder="Digite seu nome de exibição"
                 />
               </div>
@@ -531,7 +487,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
                 name="email" 
                 type="email" 
                 value={editedProfile.email || ''} 
-                onChange={handleEmailChange} disabled 
+                onChange={handleChange} disabled 
                 />
               </div>
               <div>
@@ -540,7 +496,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
                 id="cpf" 
                 name="cpf" 
                 value={editedProfile.cpf || ''} 
-                onChange={handleCpfChange}
+                onChange={handleChange}
                 disabled />
               </div>
               <div>
@@ -549,7 +505,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ profile, setProfile }) =
                 id="phone" 
                 name="phone" 
                 value={editedProfile.phone || ''} 
-                onChange={handlePhoneChange} disabled 
+                onChange={handleChange} disabled 
                 />
               </div>
               
